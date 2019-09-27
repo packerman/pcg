@@ -2,12 +2,6 @@ package pcg
 
 import com.google.gson.GsonBuilder
 
-fun <T> requireNotEmpty(list: List<T>, name: String) =
-    require(list.isNotEmpty()) { "'$name' has to be not empty" }
-
-fun requireNonNegative(n: Int, name: String) =
-    require(n >= 0) { "'$name' has to be non-negative" }
-
 data class Gltf(
     val asset: Asset,
     val scene: Int? = null,
@@ -15,8 +9,8 @@ data class Gltf(
 ) {
 
     init {
-        scene?.let { requireNonNegative(it, "scene") }
         scenes?.let { requireNotEmpty(it, "scenes") }
+        scene?.let { requireInRange(it, scenes, "scene") }
     }
 }
 
@@ -58,3 +52,12 @@ fun main() {
     )
     println(gltf.toJson(true))
 }
+
+fun requireNotEmpty(list: List<*>, name: String) =
+    require(list.isNotEmpty()) { "'$name' has to be not empty" }
+
+fun requireNonNegative(n: Int, name: String) =
+    require(n >= 0) { "'$name' has to be non-negative" }
+
+fun requireInRange(i: Int, list: List<*>?, name: String) =
+    require(list != null && i >= 0 && i < list.size) { "'$name' is not valid index" }
