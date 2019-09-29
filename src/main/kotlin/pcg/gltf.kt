@@ -66,7 +66,11 @@ data class Asset(
 data class Buffer(
     val byteLength: Int,
     val uri: String? = null
-)
+) {
+    init {
+        requirePositive(byteLength, "byteLength")
+    }
+}
 
 /**
  * @see <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-bufferview"/>
@@ -345,8 +349,8 @@ fun main() {
 fun requireNotEmpty(list: List<*>, name: String) =
     require(list.isNotEmpty()) { "'$name' has to be not empty" }
 
-fun requireNonNegative(n: Int, name: String) =
-    require(n >= 0) { "'$name' has to be non-negative" }
+fun requirePositive(n: Int, name: String) =
+    require(n > 0) { "'$name' has to be non-negative" }
 
 fun requireInRange(i: Int, list: List<*>?, name: String) =
     require(list != null && i >= 0 && i < list.size) { "'$name' is not valid index" }
