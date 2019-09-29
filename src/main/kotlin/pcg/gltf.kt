@@ -3,29 +3,12 @@ package pcg
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonPrimitive
 import com.google.gson.JsonSerializer
-
-enum class ComponentType(val type: Int) {
-    BYTE(5120),
-    UNSIGNED_BYTE(5121),
-    SHORT(5122),
-    UNSIGNED_SHORT(5123),
-    UNSIGNED_INT(5125),
-    FLOAT(5126);
-
-    companion object {
-        val serializer = JsonSerializer<ComponentType> { src, _, _ -> JsonPrimitive(src.type) }
-    }
-}
-
-enum class Type {
-    SCALAR,
-    VEC2,
-    VEC3,
-    VEC4,
-    MAT2,
-    MAT3,
-    MAT4
-}
+import pcg.Accessor.Companion.ComponentType
+import pcg.Accessor.Companion.Type
+import pcg.BufferView.Companion.Target
+import pcg.Primitive.Companion.Attribute
+import pcg.Primitive.Companion.Mode
+import kotlin.reflect.KClass
 
 data class Accessor(
     val bufferView: Int? = null,
@@ -37,7 +20,42 @@ data class Accessor(
     val name: String? = null,
     val type: Type
 ) {
+    init {
+        //TODO validate min and max as having elements of type the same as componentType
+        max?.let {
+            requireSize(max, type.length, "max")
+            hasElementsOf(it, componentType.kClass, "max")
+        }
+        min?.let {
+            requireSize(min, type.length, "min")
+            hasElementsOf(it, componentType.kClass, "min")
+        }
+    }
 
+    companion object {
+        enum class ComponentType(val type: Int, val kClass: KClass<out Number>) {
+            BYTE(5120, Byte::class),
+            UNSIGNED_BYTE(5121, Byte::class),
+            SHORT(5122, Short::class),
+            UNSIGNED_SHORT(5123, Short::class),
+            UNSIGNED_INT(5125, Int::class),
+            FLOAT(5126, Float::class);
+
+            companion object {
+                val serializer = JsonSerializer<ComponentType> { src, _, _ -> JsonPrimitive(src.type) }
+            }
+        }
+
+        enum class Type(val length: Int) {
+            SCALAR(1),
+            VEC2(2),
+            VEC3(3),
+            VEC4(4),
+            MAT2(4),
+            MAT3(9),
+            MAT4(16)
+        }
+    }
 }
 
 data class Asset(
@@ -45,9 +63,41 @@ data class Asset(
     val minVersion: String? = null
 )
 
+data class Buffer(
+    val byteLength: Int,
+    val uri: String? = null
+)
+
+/**
+ * @see <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-bufferview"/>
+ */
+data class BufferView(
+    val buffer: Int,
+    val byteOffset: Int? = 0,
+    val byteLength: Int,
+    val byteStride: Int? = null,
+    val target: Target?
+) {
+    companion object {
+        enum class Target(val target: Int) {
+            ARRAY_BUFFER(34962),
+            ELEMENT_ARRAY_BUFFER(34963);
+
+            companion object {
+                val serializer = JsonSerializer<Target> { src, _, _ -> JsonPrimitive(src.target) }
+            }
+        }
+    }
+}
+
+/**
+ * @see <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-gltf"/>
+ */
 data class Gltf(
     val accessors: List<Accessor>? = null,
     val asset: Asset,
+    val buffers: List<Buffer>? = null,
+    val bufferViews: List<BufferView>? = null,
     val materials: List<Material>? = null,
     val meshes: List<Mesh>? = null,
     val nodes: List<Node>? = null,
@@ -56,7 +106,19 @@ data class Gltf(
 ) {
 
     init {
-        accessors?.let { requireNotEmpty(it, "accessors") }
+        accessors?.let {
+            requireNotEmpty(it, "accessors")
+            it.forEach { accessor ->
+                accessor.bufferView?.let { bufferView -> requireInRange(bufferView, bufferViews, "bufferView") }
+            }
+        }
+        buffers?.let { requireNotEmpty(it, "buffers") }
+        bufferViews?.let {
+            requireNotEmpty(it, "bufferViews")
+            it.forEach { bufferView ->
+                requireInRange(bufferView.buffer, buffers, "buffer")
+            }
+        }
         meshes?.let {
             requireNotEmpty(it, "meshes")
             it.forEach { mesh ->
@@ -128,30 +190,6 @@ data class Node(
     }
 }
 
-enum class Attribute {
-    NORMAL,
-    POSITION,
-    TEXCOORD_0
-}
-
-//TODO mode has to be serialized as int, not string
-
-enum class Mode {
-    POINTS,
-    LINES,
-    LINE_LOOP,
-    LINE_STRIP,
-    TRIANGLES,
-    TRIANGLE_STRIP,
-    TRIANGLE_FAN;
-
-    companion object {
-        val DEFAULT = TRIANGLES
-
-        val serializer = JsonSerializer<Mode> { src, _, _ -> JsonPrimitive(src.ordinal) }
-    }
-}
-
 data class Primitive(
     val attributes: Map<Attribute, Int>,
     val indices: Int? = null,
@@ -159,6 +197,29 @@ data class Primitive(
     val material: Int? = null
 ) {
     //TODO - validate attributes and indices after adding accesssors
+    companion object {
+        enum class Attribute {
+            NORMAL,
+            POSITION,
+            TEXCOORD_0
+        }
+
+        enum class Mode {
+            POINTS,
+            LINES,
+            LINE_LOOP,
+            LINE_STRIP,
+            TRIANGLES,
+            TRIANGLE_STRIP,
+            TRIANGLE_FAN;
+
+            companion object {
+                val DEFAULT = TRIANGLES
+
+                val serializer = JsonSerializer<Mode> { src, _, _ -> JsonPrimitive(src.ordinal) }
+            }
+        }
+    }
 }
 
 data class Scene(
@@ -182,12 +243,48 @@ fun Gltf.toJson(prettyPrinting: Boolean = false): String {
     }
     builder.registerTypeAdapter(Mode::class.java, Mode.serializer)
     builder.registerTypeAdapter(ComponentType::class.java, ComponentType.serializer)
+    builder.registerTypeAdapter(Target::class.java, Target.serializer)
     val gson = builder.create()
     return gson.toJson(this)
 }
 
 fun main() {
     val gltf = Gltf(
+        asset = defaultAsset,
+        scene = 0,
+        scenes = listOf(
+            Scene(nodes = listOf(0))
+        ),
+        nodes = listOf(
+            Node(
+                children = listOf(1),
+                matrix = floatArrayOf(
+                    1.0f, 0.0f, 0.0f, 0.0f,
+                    0.0f, 0.0f, -1.0f, 0.0f,
+                    0.0f, 1.0f, 0.0f, 0.0f,
+                    0.0f, 0.0f, 0.0f, 1.0f
+                )
+            ),
+            Node(
+                mesh = 0
+            )
+        ),
+        meshes = listOf(
+            Mesh(
+                primitives = listOf(
+                    Primitive(
+                        attributes = mapOf(
+                            Attribute.NORMAL to 1,
+                            Attribute.POSITION to 2
+                        ),
+                        indices = 0,
+                        mode = Mode.TRIANGLES,
+                        material = 0
+                    )
+                ),
+                name = "Mesh"
+            )
+        ),
         accessors = listOf(
             Accessor(
                 bufferView = 0,
@@ -215,54 +312,30 @@ fun main() {
                 max = listOf(0.5f, 0.5f, 0.5f),
                 min = listOf(-0.5f, -0.5f, -0.5f),
                 type = Type.VEC3
-            ),
-            Accessor(
-                bufferView = 2,
-                byteOffset = 0,
-                componentType = ComponentType.FLOAT,
-                count = 24,
-                max = listOf(6f, 1f),
-                min = listOf(0f, 0f),
-                type = Type.VEC2
-            )
-        ),
-        asset = defaultAsset,
-        scene = 0,
-        scenes = listOf(
-            Scene(nodes = listOf(0))
-        ),
-        nodes = listOf(
-            Node(
-                children = listOf(1),
-                matrix = floatArrayOf(
-                    1.0f, 0.0f, 0.0f, 0.0f,
-                    0.0f, 0.0f, -1.0f, 0.0f,
-                    0.0f, 1.0f, 0.0f, 0.0f,
-                    0.0f, 0.0f, 0.0f, 1.0f
-                )
-            ),
-            Node(
-                mesh = 0
             )
         ),
         materials = listOf(
             Material(name = "Texture")
         ),
-        meshes = listOf(
-            Mesh(
-                primitives = listOf(
-                    Primitive(
-                        attributes = mapOf(
-                            Attribute.NORMAL to 1,
-                            Attribute.POSITION to 2,
-                            Attribute.TEXCOORD_0 to 3
-                        ),
-                        indices = 0,
-                        mode = Mode.TRIANGLES,
-                        material = 0
-                    )
-                ),
-                name = "Mesh"
+        bufferViews = listOf(
+            BufferView(
+                buffer = 0,
+                byteOffset = 576,
+                byteLength = 72,
+                target = Target.ELEMENT_ARRAY_BUFFER
+            ),
+            BufferView(
+                buffer = 0,
+                byteOffset = 0,
+                byteLength = 576,
+                byteStride = 12,
+                target = Target.ARRAY_BUFFER
+            )
+        ),
+        buffers = listOf(
+            Buffer(
+                byteLength = 648,
+                uri = "data:application/octet-stream;base64"
             )
         )
     )
@@ -280,3 +353,14 @@ fun requireInRange(i: Int, list: List<*>?, name: String) =
 
 fun requireSize(array: FloatArray, n: Int, name: String) =
     require(array.size == n) { "'$name' has to have size $n" }
+
+fun requireSize(list: List<*>, n: Int, name: String) =
+    require(list.size == n) { "'$name' has to have size $n" }
+
+fun hasElementsOf(list: List<out Number>, kClass: KClass<out Number>, name: String) {
+    list.forEach { element ->
+        require(kClass.isInstance(element)) {
+            "List $name has some element of type ${element::class} while all elements have to be of $kClass type"
+        }
+    }
+}
