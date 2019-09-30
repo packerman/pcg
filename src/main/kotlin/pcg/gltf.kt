@@ -154,7 +154,7 @@ data class Gltf(
 }
 
 /**
- * @see <a href=""/>
+ * @see <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-material"/>
  */
 data class Material(
     val name: String? = null,
@@ -169,8 +169,6 @@ data class Mesh(
         requireNotEmpty(primitives, "primitives")
     }
 }
-
-val identity = floatArrayOf(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
 
 data class Node(
     val children: List<Int>? = null,
@@ -202,8 +200,17 @@ data class Node(
         result = 31 * result + (mesh ?: 0)
         return result
     }
+
+    companion object {
+        val default = Node(
+            matrix = floatArrayOf(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
+        )
+    }
 }
 
+/**
+ * @see <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-pbrmetallicroughness"/>
+ */
 data class PbrMetallicRoughness(
     val baseColorFactor: FloatArray? = null,
     val metallicFactor: Float? = null,
@@ -242,7 +249,6 @@ data class PbrMetallicRoughness(
             roughnessFactor = 1f
         )
     }
-
 }
 
 data class Primitive(
