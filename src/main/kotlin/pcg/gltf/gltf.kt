@@ -1,13 +1,13 @@
-package pcg
+package pcg.gltf
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonPrimitive
 import com.google.gson.JsonSerializer
-import pcg.Accessor.Companion.ComponentType
-import pcg.Accessor.Companion.Type
-import pcg.BufferView.Companion.Target
-import pcg.Primitive.Companion.Attribute
-import pcg.Primitive.Companion.Mode
+import pcg.gltf.Accessor.Companion.ComponentType
+import pcg.gltf.Accessor.Companion.Type
+import pcg.gltf.BufferView.Companion.Target
+import pcg.gltf.Primitive.Companion.Attribute
+import pcg.gltf.Primitive.Companion.Mode
 import kotlin.reflect.KClass
 
 data class Accessor(
@@ -119,7 +119,13 @@ data class Gltf(
         accessors?.let {
             requireNotEmpty(it, "accessors")
             it.forEach { accessor ->
-                accessor.bufferView?.let { bufferView -> requireInRange(bufferView, bufferViews, "bufferView") }
+                accessor.bufferView?.let { bufferView ->
+                    requireInRange(
+                        bufferView,
+                        bufferViews,
+                        "bufferView"
+                    )
+                }
             }
         }
         buffers?.let { requireNotEmpty(it, "buffers") }
