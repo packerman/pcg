@@ -61,7 +61,13 @@ data class Accessor(
 data class Asset(
     val version: String,
     val minVersion: String? = null
-)
+) {
+    companion object {
+        val default = Asset(
+            version = "2.0"
+        )
+    }
+}
 
 data class Buffer(
     val byteLength: Int,
@@ -147,8 +153,12 @@ data class Gltf(
     }
 }
 
+/**
+ * @see <a href=""/>
+ */
 data class Material(
-    val name: String? = null
+    val name: String? = null,
+    val pbrMetallicRoughness: PbrMetallicRoughness? = null
 )
 
 data class Mesh(
@@ -194,6 +204,47 @@ data class Node(
     }
 }
 
+data class PbrMetallicRoughness(
+    val baseColorFactor: FloatArray? = null,
+    val metallicFactor: Float? = null,
+    val roughnessFactor: Float? = null
+) {
+
+    init {
+        baseColorFactor?.let { requireSize(baseColorFactor, 4, "baseColorFactor") }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PbrMetallicRoughness) return false
+
+        if (baseColorFactor != null) {
+            if (other.baseColorFactor == null) return false
+            if (!baseColorFactor.contentEquals(other.baseColorFactor)) return false
+        } else if (other.baseColorFactor != null) return false
+        if (metallicFactor != other.metallicFactor) return false
+        if (roughnessFactor != other.roughnessFactor) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = baseColorFactor?.contentHashCode() ?: 0
+        result = 31 * result + (metallicFactor?.hashCode() ?: 0)
+        result = 31 * result + (roughnessFactor?.hashCode() ?: 0)
+        return result
+    }
+
+    companion object {
+        val default = PbrMetallicRoughness(
+            baseColorFactor = floatArrayOf(1f, 1f, 1f, 1f),
+            metallicFactor = 1f,
+            roughnessFactor = 1f
+        )
+    }
+
+}
+
 data class Primitive(
     val attributes: Map<Attribute, Int>,
     val indices: Int? = null,
@@ -236,10 +287,6 @@ data class Scene(
     }
 }
 
-val defaultAsset = Asset(
-    version = "2.0"
-)
-
 fun Gltf.toJson(prettyPrinting: Boolean = false): String {
     val builder = GsonBuilder()
     if (prettyPrinting) {
@@ -254,7 +301,7 @@ fun Gltf.toJson(prettyPrinting: Boolean = false): String {
 
 fun main() {
     val gltf = Gltf(
-        asset = defaultAsset,
+        asset = Asset.default,
         scene = 0,
         scenes = listOf(
             Scene(nodes = listOf(0))
@@ -319,7 +366,18 @@ fun main() {
             )
         ),
         materials = listOf(
-            Material(name = "Texture")
+            Material(
+                pbrMetallicRoughness = PbrMetallicRoughness(
+                    baseColorFactor = floatArrayOf(
+                        0.800000011920929f,
+                        0.0f,
+                        0.0f,
+                        1.0f
+                    ),
+                    metallicFactor = 0.0f
+                ),
+                name = "Red"
+            )
         ),
         bufferViews = listOf(
             BufferView(
