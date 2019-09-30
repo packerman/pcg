@@ -15,6 +15,7 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation(kotlin("reflect"))
     implementation("com.google.code.gson:gson:2.8.5")
+    implementation("org.joml:joml:1.9.18")
 }
 
 tasks.withType<KotlinCompile> {
