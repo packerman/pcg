@@ -5,6 +5,9 @@ import kotlin.reflect.KClass
 fun requireNotEmpty(list: List<*>, name: String) =
     require(list.isNotEmpty()) { "'$name' has to be not empty" }
 
+fun requireNotEmpty(map: Map<*, *>, name: String) =
+    require(map.isNotEmpty()) { "'$name' has to be not empty" }
+
 fun requirePositive(n: Int, name: String) =
     require(n > 0) { "'$name' has to be non-negative" }
 

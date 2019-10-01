@@ -2,20 +2,44 @@ package pcg.scene
 
 import org.joml.Vector3f
 import org.joml.Vector3fc
+import pcg.scene.Float3VertexArray.Companion.Float3VertexArrayBuilder
 import pcg.scene.Geometry.Companion.GeometryBuilder
+import pcg.scene.Mesh.Companion.Attribute.Normal
+import pcg.scene.Mesh.Companion.Attribute.Position
 import pcg.scene.Mesh.Companion.MeshBuilder
 import pcg.scene.Mesh.Companion.Primitive
+import pcg.scene.Mesh.Companion.Primitive.Triangles
+import pcg.scene.ShortIndexArray.Companion.ShortIndexArrayBuilder
 import pcg.validate.requireNotEmpty
 
-class IndexArray {
+abstract class IndexArray : ByteSized {
 
+}
+
+class ShortIndexArray(val indices: ShortArray) : IndexArray() {
+
+    override val byteSize: Int = 2 * indices.size
+
+    companion object {
+        class ShortIndexArrayBuilder : Builder<IndexArray> {
+            private val indices = mutableListOf<Short>()
+
+            fun add(i: Short, j: Short, k: Short) {
+                indices.add(i)
+                indices.add(j)
+                indices.add(k)
+            }
+
+            override fun build(): IndexArray = ShortIndexArray(indices.toShortArray())
+        }
+
+    }
 }
 
 fun geometry(block: GeometryBuilder.() -> Unit): Geometry = GeometryBuilder().apply(block).build()
 
-class Geometry(val meshes: List<Mesh>) {
-
-    constructor(mesh: Mesh) : this(listOf(mesh))
+class Geometry(val meshes: List<Mesh>) : ByteSized {
+    override val byteSize: Int = meshes.sumBy(Mesh::byteSize)
 
     init {
         requireNotEmpty(meshes, "meshes")
@@ -24,23 +48,29 @@ class Geometry(val meshes: List<Mesh>) {
     companion object {
         class GeometryBuilder : Builder<Geometry> {
 
+            private val meshes = mutableListOf<Mesh>()
+
+            fun mesh(
+                primitive: Primitive = Triangles,
+                block: MeshBuilder.() -> Unit
+            ) {
+                meshes.add(MeshBuilder(primitive).apply(block).build())
+            }
+
             override fun build(): Geometry {
-                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+                return Geometry(meshes)
             }
         }
     }
 }
 
-fun mesh(
-    primitive: Primitive = Primitive.Triangles,
-    block: MeshBuilder.() -> Unit
-): Mesh = MeshBuilder(primitive).apply(block).build()
-
 class Mesh(
-    val primitive: Primitive = Primitive.Triangles,
-    val vertexArrays: List<VertexArray>,
+    val primitive: Primitive = Triangles,
+    val vertexArrays: Map<Attribute, VertexArray>,
     val indexArrays: List<IndexArray>
-) {
+) : ByteSized {
+    override val byteSize: Int =
+        vertexArrays.values.sumBy(VertexArray::byteSize) + indexArrays.sumBy(IndexArray::byteSize)
 
     init {
         requireNotEmpty(vertexArrays, "vertexArrays")
@@ -56,10 +86,27 @@ class Mesh(
             Quads
         }
 
+        enum class Attribute {
+            Position,
+            Normal,
+            TexCoord
+        }
+
         class MeshBuilder(val primitive: Primitive) : Builder<Mesh> {
 
-            private val vertexArrays = mutableListOf<VertexArray>()
+            private val vertexArrays = mutableMapOf<Attribute, VertexArray>()
             private val indexArrays = mutableListOf<IndexArray>()
+
+            fun vertexArray3f(
+                attribute: Attribute,
+                block: Float3VertexArrayBuilder.() -> Unit
+            ) {
+                vertexArrays[attribute] = Float3VertexArrayBuilder().apply(block).build()
+            }
+
+            fun indexArray(block: ShortIndexArrayBuilder.() -> Unit) {
+                indexArrays.add(ShortIndexArrayBuilder().apply(block).build())
+            }
 
             override fun build(): Mesh {
                 return Mesh(primitive, vertexArrays, indexArrays)
@@ -68,11 +115,13 @@ class Mesh(
     }
 }
 
-open class VertexArray {
+abstract class VertexArray : ByteSized {
 
 }
 
 class Float3VertexArray(val vertices: Array<Vector3fc>) : VertexArray() {
+
+    override val byteSize: Int = 3 * 4 * vertices.size
 
     companion object {
 
@@ -88,14 +137,84 @@ class Float3VertexArray(val vertices: Array<Vector3fc>) : VertexArray() {
     }
 }
 
+interface ByteSized {
+    val byteSize: Int
+}
+
 interface Builder<out T> {
     fun build(): T
 }
 
 fun main() {
     val g = geometry {
-        mesh {
-
+        mesh(primitive = Triangles) {
+            vertexArray3f(attribute = Position) {
+                add(-0.5f, -0.5f, -0.5f)
+                add(-0.5f, 0.5f, -0.5f)
+                add(0.5f, 0.5f, -0.5f)
+                add(0.5f, -0.5f, -0.5f)
+                add(-0.5f, -0.5f, 0.5f)
+                add(0.5f, -0.5f, 0.5f)
+                add(0.5f, 0.5f, 0.5f)
+                add(-0.5f, 0.5f, 0.5f)
+                add(-0.5f, -0.5f, -0.5f)
+                add(0.5f, -0.5f, -0.5f)
+                add(0.5f, -0.5f, 0.5f)
+                add(-0.5f, -0.5f, 0.5f)
+                add(-0.5f, -0.5f, -0.5f)
+                add(0.5f, 0.5f, -0.5f)
+                add(0.5f, 0.5f, 0.5f)
+                add(0.5f, -0.5f, 0.5f)
+                add(0.5f, 0.5f, -0.5f)
+                add(-0.5f, 0.5f, -0.5f)
+                add(-0.5f, 0.5f, 0.5f)
+                add(0.5f, 0.5f, 0.5f)
+                add(-0.5f, 0.5f, -0.5f)
+                add(-0.5f, -0.5f, -0.5f)
+                add(-0.5f, -0.5f, 0.5f)
+                add(-0.5f, 0.5f, 0.5f)
+            }
+            vertexArray3f(attribute = Normal) {
+                add(0.0f, 0.0f, -1.0f)
+                add(0.0f, 0.0f, -1.0f)
+                add(0.0f, 0.0f, -1.0f)
+                add(0.0f, 0.0f, -1.0f)
+                add(0.0f, 0.0f, 1.0f)
+                add(0.0f, 0.0f, 1.0f)
+                add(0.0f, 0.0f, 1.0f)
+                add(0.0f, 0.0f, 1.0f)
+                add(0.0f, -1.0f, 0.0f)
+                add(0.0f, -1.0f, 0.0f)
+                add(0.0f, -1.0f, 0.0f)
+                add(0.0f, -1.0f, 0.0f)
+                add(1.0f, 0.0f, 0.0f)
+                add(1.0f, 0.0f, 0.0f)
+                add(1.0f, 0.0f, 0.0f)
+                add(1.0f, 0.0f, 0.0f)
+                add(0.0f, 1.0f, 0.0f)
+                add(0.0f, 1.0f, 0.0f)
+                add(0.0f, 1.0f, 0.0f)
+                add(0.0f, 1.0f, 0.0f)
+                add(-1.0f, 0.0f, 0.0f)
+                add(-1.0f, 0.0f, 0.0f)
+                add(-1.0f, 0.0f, 0.0f)
+                add(-1.0f, 0.0f, 0.0f)
+            }
+            indexArray {
+                add(0, 1, 2)
+                add(2, 3, 0)
+                add(4, 5, 6)
+                add(6, 7, 4)
+                add(8, 9, 10)
+                add(10, 11, 8)
+                add(12, 13, 14)
+                add(14, 15, 12)
+                add(16, 17, 18)
+                add(18, 19, 16)
+                add(20, 21, 22)
+                add(22, 23, 20)
+            }
         }
     }
+    println(g.byteSize)
 }
