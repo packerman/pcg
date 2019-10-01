@@ -12,6 +12,8 @@ import pcg.scene.Mesh.Companion.Primitive.Triangles
 import pcg.scene.ShortIndexArray.Companion.ShortIndexArrayBuilder
 import pcg.validate.requireNotEmpty
 
+data class Color(val red: Float, val green: Float, val blue: Float, val alpha: Float = 1f)
+
 abstract class IndexArray : ByteSized {
 
 }
@@ -32,7 +34,6 @@ class ShortIndexArray(val indices: ShortArray) : IndexArray() {
 
             override fun build(): IndexArray = ShortIndexArray(indices.toShortArray())
         }
-
     }
 }
 
@@ -62,6 +63,19 @@ class Geometry(val meshes: List<Mesh>) : ByteSized {
             }
         }
     }
+}
+
+class GeometryNode(val geometry: Geometry, val material: Material)
+
+class Material(
+    val name: String? = null,
+    val diffuse: Color = Color(1f, 1f, 1f),
+    val specular: Color = Color(0f, 0f, 0f),
+    val emission: Color = Color(0f, 0f, 0f),
+    val opacity: Color = Color(1f, 1f, 1f),
+    val transparency: Color = Color(0f, 0f, 0f),
+    val specularPower: Float = 1f
+) {
 }
 
 class Mesh(
@@ -216,5 +230,10 @@ fun main() {
             }
         }
     }
+    val m = Material(
+        name = "Red",
+        diffuse = Color(0.8f, 0f, 0f)
+    )
+    val n = GeometryNode(g, m)
     println(g.byteSize)
 }
