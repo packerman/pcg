@@ -16,6 +16,9 @@ dependencies {
     implementation(kotlin("reflect"))
     implementation("com.google.code.gson:gson:2.8.5")
     implementation("org.joml:joml:1.9.18")
+
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.5.2")
+    testRuntime("org.junit.jupiter:junit-jupiter-engine:5.5.2")
 }
 
 tasks.withType<KotlinCompile> {

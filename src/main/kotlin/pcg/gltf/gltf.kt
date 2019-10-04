@@ -105,7 +105,7 @@ data class BufferView(
  */
 data class Gltf(
     val accessors: List<Accessor>? = null,
-    val asset: Asset,
+    val asset: Asset = Asset.default,
     val buffers: List<Buffer>? = null,
     val bufferViews: List<BufferView>? = null,
     val materials: List<Material>? = null,

@@ -9,6 +9,7 @@ import pcg.scene.Mesh.Companion.Attribute.Position
 import pcg.scene.Mesh.Companion.MeshBuilder
 import pcg.scene.Mesh.Companion.Primitive
 import pcg.scene.Mesh.Companion.Primitive.Triangles
+import pcg.scene.Scene.Companion.SceneBuilder
 import pcg.scene.ShortIndexArray.Companion.ShortIndexArrayBuilder
 import pcg.validate.requireNotEmpty
 
@@ -65,7 +66,7 @@ class Geometry(val meshes: List<Mesh>) : ByteSized {
     }
 }
 
-class GeometryNode(val geometry: Geometry, val material: Material)
+class GeometryNode(val geometry: Geometry, val material: Material) : Node()
 
 class Material(
     val name: String? = null,
@@ -75,8 +76,7 @@ class Material(
     val opacity: Color = Color(1f, 1f, 1f),
     val transparency: Color = Color(0f, 0f, 0f),
     val specularPower: Float = 1f
-) {
-}
+)
 
 class Mesh(
     val primitive: Primitive = Triangles,
@@ -125,6 +125,31 @@ class Mesh(
             override fun build(): Mesh {
                 return Mesh(primitive, vertexArrays, indexArrays)
             }
+        }
+    }
+}
+
+open class Node {}
+
+fun scene(block: SceneBuilder.() -> Unit): Scene = SceneBuilder().apply(block).build()
+
+class Scene(val nodes: List<Node>) {
+
+    companion object {
+
+        class SceneBuilder : Builder<Scene> {
+
+            private val nodes = mutableListOf<Node>()
+
+            fun node(node: Node) {
+                nodes.add(node)
+            }
+
+            fun node(geometry: Geometry, material: Material) {
+                nodes.add(GeometryNode(geometry, material))
+            }
+
+            override fun build(): Scene = Scene(nodes)
         }
     }
 }
@@ -234,6 +259,9 @@ fun main() {
         name = "Red",
         diffuse = Color(0.8f, 0f, 0f)
     )
-    val n = GeometryNode(g, m)
+    scene {
+        node(g, m)
+    }
+
     println(g.byteSize)
 }
