@@ -154,13 +154,15 @@ class Scene(val nodes: List<Node>) {
     }
 }
 
-abstract class VertexArray : ByteSized {
-
+interface VertexArray : ByteSized {
+    val count: Int
 }
 
-class Float3VertexArray(val vertices: Array<Vector3fc>) : VertexArray() {
+class Float3VertexArray(private val vertices: Array<Vector3fc>) : VertexArray {
 
     override val byteSize: Int = 3 * 4 * vertices.size
+
+    override val count: Int = vertices.size
 
     companion object {
 

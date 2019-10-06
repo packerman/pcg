@@ -11,6 +11,15 @@ import pcg.gltf.Primitive.Companion.Mode
 import pcg.validate.*
 import kotlin.reflect.KClass
 
+/**
+ * See
+ * <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0"/>
+ * <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#properties-reference"/>
+ */
+
+/**
+ * See <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-accessor"/>
+ */
 data class Accessor(
     val bufferView: Int? = null,
     val byteOffset: Int? = 0,
@@ -58,6 +67,9 @@ data class Accessor(
     }
 }
 
+/**
+ * See <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-asset"/>
+ */
 data class Asset(
     val version: String,
     val minVersion: String? = null
@@ -257,13 +269,19 @@ data class PbrMetallicRoughness(
     }
 }
 
+/**
+ * See <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-primitive"/>
+ */
 data class Primitive(
     val attributes: Map<Attribute, Int>,
     val indices: Int? = null,
     val mode: Mode? = null,
     val material: Int? = null
 ) {
-    //TODO - validate attributes and indices after adding accesssors
+    init {
+        requireNotEmpty(attributes, "attributes")
+    }
+
     companion object {
         enum class Attribute {
             NORMAL,

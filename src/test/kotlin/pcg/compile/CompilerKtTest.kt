@@ -2,6 +2,10 @@ package pcg.compile
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import pcg.gltf.*
+import pcg.gltf.Accessor.Companion.ComponentType
+import pcg.gltf.Accessor.Companion.Type
+import pcg.gltf.Primitive.Companion.Attribute
 import pcg.scene.Material
 import pcg.scene.Mesh.Companion.Attribute.Position
 import pcg.scene.geometry
@@ -25,13 +29,41 @@ internal class CompilerKtTest {
             node(geometry = g, material = m)
         }
 
-        val gltf = compile(s)
+        val compiledGltf = compile(s)
 
-        assertEquals(0, gltf.scene)
-        assertEquals(1, gltf.scenes?.size)
-
-        val scene = gltf.scenes?.get(0)
-
-        assertEquals(1, scene?.nodes?.size)
+        val expectedGltf = Gltf(
+            scene = 0,
+            scenes = listOf(
+                Scene(
+                    nodes = listOf(
+                        0
+                    )
+                )
+            ),
+            nodes = listOf(
+                Node(
+                    mesh = 0
+                )
+            ),
+            meshes = listOf(
+                Mesh(
+                    primitives = listOf(
+                        Primitive(
+                            attributes = mapOf(
+                                Attribute.POSITION to 0
+                            )
+                        )
+                    )
+                )
+            ),
+            accessors = listOf(
+                Accessor(
+                    componentType = ComponentType.FLOAT,
+                    count = 3,
+                    type = Type.VEC3
+                )
+            )
+        )
+        assertEquals(expectedGltf, compiledGltf)
     }
 }
