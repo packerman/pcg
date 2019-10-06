@@ -3,9 +3,9 @@ package pcg.compile
 import pcg.gltf.*
 import pcg.gltf.Accessor.Companion.ComponentType
 import pcg.gltf.Accessor.Companion.Type
-import pcg.scene.Float3VertexArray
-import pcg.scene.Geometry
-import pcg.scene.GeometryNode
+import pcg.gltf.Mesh
+import pcg.gltf.Node
+import pcg.scene.*
 import pcg.scene.Mesh.Companion.Attribute
 import pcg.scene.Scene
 import pcg.gltf.Primitive.Companion.Attribute as GltfAttribute
@@ -57,12 +57,20 @@ class GeometryCompiler(private val geometry: Geometry) {
             val accessor = Accessor(
                 componentType = when (vertexArray) {
                     is Float3VertexArray -> ComponentType.FLOAT
-                    else -> error("Unknown Vertex Array type: ${vertexArray::class}")
+                    else -> unknownVertexArrayTypeError(vertexArray)
                 },
                 count = vertexArray.count,
                 type = when (vertexArray) {
                     is Float3VertexArray -> Type.VEC3
-                    else -> error("Unknown Vertex Array type: ${vertexArray::class}")
+                    else -> unknownVertexArrayTypeError(vertexArray)
+                },
+                max = when (vertexArray) {
+                    is Float3VertexArray -> listOf(vertexArray.max.x(), vertexArray.max.y(), vertexArray.max.z())
+                    else -> unknownVertexArrayTypeError(vertexArray)
+                },
+                min = when (vertexArray) {
+                    is Float3VertexArray -> listOf(vertexArray.min.x(), vertexArray.min.y(), vertexArray.min.z())
+                    else -> unknownVertexArrayTypeError(vertexArray)
                 }
             )
             return@map resultAttribute to accessor
@@ -75,5 +83,8 @@ class GeometryCompiler(private val geometry: Geometry) {
             Attribute.Normal to GltfAttribute.NORMAL,
             Attribute.TexCoord to GltfAttribute.TEXCOORD_0
         )
+
+        private fun unknownVertexArrayTypeError(vertexArray: VertexArray<*>): Nothing =
+            error("Unknown Vertex Array type: ${vertexArray::class}")
     }
 }

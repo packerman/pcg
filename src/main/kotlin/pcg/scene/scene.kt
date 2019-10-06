@@ -80,11 +80,11 @@ class Material(
 
 class Mesh(
     val primitive: Primitive = Triangles,
-    val vertexArrays: Map<Attribute, VertexArray>,
+    val vertexArrays: Map<Attribute, VertexArray<*>>,
     val indexArrays: List<IndexArray>
 ) : ByteSized {
     override val byteSize: Int =
-        vertexArrays.values.sumBy(VertexArray::byteSize) + indexArrays.sumBy(IndexArray::byteSize)
+        vertexArrays.values.sumBy(VertexArray<*>::byteSize) + indexArrays.sumBy(IndexArray::byteSize)
 
     init {
         requireNotEmpty(vertexArrays, "vertexArrays")
@@ -108,7 +108,7 @@ class Mesh(
 
         class MeshBuilder(val primitive: Primitive) : Builder<Mesh> {
 
-            private val vertexArrays = mutableMapOf<Attribute, VertexArray>()
+            private val vertexArrays = mutableMapOf<Attribute, VertexArray<*>>()
             private val indexArrays = mutableListOf<IndexArray>()
 
             fun vertexArray3f(
@@ -154,26 +154,64 @@ class Scene(val nodes: List<Node>) {
     }
 }
 
-interface VertexArray : ByteSized {
+interface VertexArray<T> : ByteSized {
     val count: Int
+
+    val max: T
+    val min: T
 }
 
-class Float3VertexArray(private val vertices: Array<Vector3fc>) : VertexArray {
+class Float3VertexArray(private val vertices: Array<Vector3fc>) : VertexArray<Vector3fc> {
 
     override val byteSize: Int = 3 * 4 * vertices.size
 
     override val count: Int = vertices.size
 
+    override val max: Vector3fc by lazy { maxVector(vertices) }
+    override val min: Vector3fc by lazy { minVector(vertices) }
+
     companion object {
 
-        class Float3VertexArrayBuilder : Builder<VertexArray> {
+        class Float3VertexArrayBuilder : Builder<VertexArray<Vector3fc>> {
             private val vertices = mutableListOf<Vector3fc>()
 
             fun add(x: Float, y: Float, z: Float) {
                 vertices.add(Vector3f(x, y, z))
             }
 
-            override fun build(): VertexArray = Float3VertexArray(vertices.toTypedArray())
+            override fun build(): VertexArray<Vector3fc> = Float3VertexArray(vertices.toTypedArray())
+        }
+
+        private fun maxVector(array: Array<Vector3fc>): Vector3fc {
+            val result = Vector3f(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY)
+            for (elem in array) {
+                if (elem.x() > result.x) {
+                    result.x = elem.x()
+                }
+                if (elem.y() > result.y) {
+                    result.y = elem.y()
+                }
+                if (elem.z() > result.z) {
+                    result.z = elem.z()
+                }
+            }
+            return result
+        }
+
+        private fun minVector(array: Array<Vector3fc>): Vector3fc {
+            val result = Vector3f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+            for (elem in array) {
+                if (elem.x() < result.x) {
+                    result.x = elem.x()
+                }
+                if (elem.y() < result.y) {
+                    result.y = elem.y()
+                }
+                if (elem.z() < result.z) {
+                    result.z = elem.z()
+                }
+            }
+            return result
         }
     }
 }

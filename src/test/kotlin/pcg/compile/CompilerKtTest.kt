@@ -60,7 +60,9 @@ internal class CompilerKtTest {
                 Accessor(
                     componentType = ComponentType.FLOAT,
                     count = 3,
-                    type = Type.VEC3
+                    type = Type.VEC3,
+                    max = listOf(1f, 1f, 0f),
+                    min = listOf(0f, 0f, 0f)
                 )
             )
         )
