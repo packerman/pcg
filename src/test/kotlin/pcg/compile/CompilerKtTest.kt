@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import pcg.gltf.*
 import pcg.gltf.Accessor.Companion.ComponentType
 import pcg.gltf.Accessor.Companion.Type
+import pcg.gltf.BufferView.Companion.Target
 import pcg.gltf.Primitive.Companion.Attribute
 import pcg.scene.Material
 import pcg.scene.Mesh.Companion.Attribute.Position
@@ -54,6 +55,13 @@ internal class CompilerKtTest {
                             )
                         )
                     )
+                )
+            ),
+            bufferViews = listOf(
+                BufferView(
+                    buffer = 0,
+                    byteLength = 36,
+                    target = Target.ARRAY_BUFFER
                 )
             ),
             accessors = listOf(

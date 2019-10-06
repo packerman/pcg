@@ -3,6 +3,7 @@ package pcg.compile
 import pcg.gltf.*
 import pcg.gltf.Accessor.Companion.ComponentType
 import pcg.gltf.Accessor.Companion.Type
+import pcg.gltf.BufferView.Companion.Target
 import pcg.gltf.Mesh
 import pcg.gltf.Node
 import pcg.scene.*
@@ -38,6 +39,7 @@ fun compile(scene: Scene): Gltf {
             )
         ),
         accessors = compiledGeometries.flatMap(GeometryCompiler::accessors),
+        bufferViews = compiledGeometries.flatMap { it.bufferViews },
         buffers = compiledGeometries.map(GeometryCompiler::buffer)
     )
 }
@@ -53,6 +55,8 @@ class GeometryCompiler(private val geometry: Geometry) {
     val accessorMap: Map<GltfAttribute, Accessor> by lazy { createAccessors() }
 
     val accessors: Collection<Accessor> = accessorMap.values
+
+    val bufferViews: Collection<BufferView> by lazy { createBufferViews() }
 
     val buffer: Buffer by lazy { createBuffer() }
 
@@ -84,7 +88,19 @@ class GeometryCompiler(private val geometry: Geometry) {
         }.toMap()
     }
 
-    fun createBuffer(): Buffer {
+    private fun createBufferViews(): List<BufferView> {
+        val mesh = geometry.meshes[0]
+
+        return listOf(
+            BufferView(
+                buffer = 0,
+                byteLength = mesh.byteSize,
+                target = Target.ARRAY_BUFFER
+            )
+        )
+    }
+
+    private fun createBuffer(): Buffer {
         val mesh = geometry.meshes[0]
 
         val byteArray = ByteArray(mesh.byteSize)

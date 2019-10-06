@@ -98,7 +98,7 @@ data class BufferView(
     val byteOffset: Int? = 0,
     val byteLength: Int,
     val byteStride: Int? = null,
-    val target: Target?
+    val target: Target? = null
 ) {
     companion object {
         enum class Target(val target: Int) {
