@@ -11,6 +11,7 @@ import pcg.scene.Material
 import pcg.scene.Mesh.Companion.Attribute.Position
 import pcg.scene.geometry
 import pcg.scene.scene
+import java.io.File
 
 internal class CompilerKtTest {
 
@@ -66,6 +67,7 @@ internal class CompilerKtTest {
             ),
             accessors = listOf(
                 Accessor(
+                    bufferView = 0,
                     componentType = ComponentType.FLOAT,
                     count = 3,
                     type = Type.VEC3,
@@ -81,5 +83,17 @@ internal class CompilerKtTest {
             )
         )
         assertEquals(expectedGltf, compiledGltf)
+        File("TriangleWithoutIndices.gltf").writeText(compiledGltf.toJson(true))
+    }
+
+    companion object {
+        private const val writeToFiles = true
+
+        @SuppressWarnings("ConstantConditions")
+        fun writeToFile(fileName: String, gltf: Gltf) {
+            if (writeToFiles) {
+                File(fileName).writeText(gltf.toJson(true))
+            }
+        }
     }
 }

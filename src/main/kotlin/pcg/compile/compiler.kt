@@ -66,6 +66,7 @@ class GeometryCompiler(private val geometry: Geometry) {
         return mesh.vertexArrays.map { (attribute, vertexArray) ->
             val resultAttribute = requireNotNull(attributeMap[attribute]) { "Unknown attribute: $attribute" }
             val accessor = Accessor(
+                bufferView = 0,
                 componentType = when (vertexArray) {
                     is Float3VertexArray -> ComponentType.FLOAT
                     else -> unknownVertexArrayTypeError(vertexArray)
