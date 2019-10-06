@@ -12,6 +12,7 @@ import pcg.scene.Mesh.Companion.Primitive.Triangles
 import pcg.scene.Scene.Companion.SceneBuilder
 import pcg.scene.ShortIndexArray.Companion.ShortIndexArrayBuilder
 import pcg.validate.requireNotEmpty
+import java.nio.ByteBuffer
 
 data class Color(val red: Float, val green: Float, val blue: Float, val alpha: Float = 1f)
 
@@ -159,16 +160,26 @@ interface VertexArray<T> : ByteSized {
 
     val max: T
     val min: T
+
+    fun copyToByteBuffer(byteBuffer: ByteBuffer)
 }
 
 class Float3VertexArray(private val vertices: Array<Vector3fc>) : VertexArray<Vector3fc> {
-
     override val byteSize: Int = 3 * 4 * vertices.size
 
     override val count: Int = vertices.size
 
     override val max: Vector3fc by lazy { maxVector(vertices) }
+
     override val min: Vector3fc by lazy { minVector(vertices) }
+
+    override fun copyToByteBuffer(byteBuffer: ByteBuffer) = with(byteBuffer) {
+        for (vertex in vertices) {
+            putFloat(vertex.x())
+            putFloat(vertex.y())
+            putFloat(vertex.z())
+        }
+    }
 
     companion object {
 

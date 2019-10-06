@@ -64,6 +64,12 @@ internal class CompilerKtTest {
                     max = listOf(1f, 1f, 0f),
                     min = listOf(0f, 0f, 0f)
                 )
+            ),
+            buffers = listOf(
+                Buffer(
+                    byteLength = 36,
+                    uri = "data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgD8AAAAA"
+                )
             )
         )
         assertEquals(expectedGltf, compiledGltf)

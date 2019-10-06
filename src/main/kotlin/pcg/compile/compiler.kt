@@ -8,6 +8,9 @@ import pcg.gltf.Node
 import pcg.scene.*
 import pcg.scene.Mesh.Companion.Attribute
 import pcg.scene.Scene
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.util.*
 import pcg.gltf.Primitive.Companion.Attribute as GltfAttribute
 import pcg.gltf.Scene as GltfScene
 
@@ -34,7 +37,8 @@ fun compile(scene: Scene): Gltf {
                 )
             )
         ),
-        accessors = compiledGeometries.flatMap(GeometryCompiler::accessors)
+        accessors = compiledGeometries.flatMap(GeometryCompiler::accessors),
+        buffers = compiledGeometries.map(GeometryCompiler::buffer)
     )
 }
 
@@ -43,11 +47,14 @@ private val Scene.geometries: Set<Geometry>
         .flatMap { n -> if (n is GeometryNode) listOf(n.geometry) else emptyList() }
         .toSet()
 
+//TODO - this should be mesh compiler
 class GeometryCompiler(private val geometry: Geometry) {
 
     val accessorMap: Map<GltfAttribute, Accessor> by lazy { createAccessors() }
 
     val accessors: Collection<Accessor> = accessorMap.values
+
+    val buffer: Buffer by lazy { createBuffer() }
 
     private fun createAccessors(): Map<GltfAttribute, Accessor> {
         val mesh = geometry.meshes[0]
@@ -77,6 +84,21 @@ class GeometryCompiler(private val geometry: Geometry) {
         }.toMap()
     }
 
+    fun createBuffer(): Buffer {
+        val mesh = geometry.meshes[0]
+
+        val byteArray = ByteArray(mesh.byteSize)
+        val byteBuffer = ByteBuffer
+            .wrap(byteArray)
+            .order(ByteOrder.LITTLE_ENDIAN)
+        mesh.vertexArrays.values.forEach { it.copyToByteBuffer(byteBuffer) }
+
+        return Buffer(
+            byteLength = mesh.byteSize,
+            uri = BASE64_DATA_URI_PREFIX + "," + getBase64Encoder().encodeToString(byteArray)
+        )
+    }
+
     companion object {
         val attributeMap = mapOf(
             Attribute.Position to GltfAttribute.POSITION,
@@ -86,5 +108,9 @@ class GeometryCompiler(private val geometry: Geometry) {
 
         private fun unknownVertexArrayTypeError(vertexArray: VertexArray<*>): Nothing =
             error("Unknown Vertex Array type: ${vertexArray::class}")
+
+        private fun getBase64Encoder() = Base64.getUrlEncoder()
+
+        private const val BASE64_DATA_URI_PREFIX = "data:application/octet-stream;base64"
     }
 }
