@@ -126,8 +126,9 @@ internal class CompilerKtTest {
                     primitives = listOf(
                         Primitive(
                             attributes = mapOf(
-                                Attribute.POSITION to 0
-                            )
+                                Attribute.POSITION to 1
+                            ),
+                            indices = 0
                         )
                     )
                 )

@@ -19,6 +19,11 @@ fun compile(scene: Scene): Gltf {
     val geometries = scene.geometries
     val compiledGeometries = geometries.map(::GeometryCompiler)
 
+    val hasIndices = scene.geometries
+        .map { g -> g.meshes[0] }
+        .any { m -> m.indexArrays.isNotEmpty() }
+
+
     return Gltf(
         scene = 0,
         scenes = listOf(
@@ -32,8 +37,9 @@ fun compile(scene: Scene): Gltf {
                 primitives = listOf(
                     Primitive(
                         mapOf(
-                            GltfAttribute.POSITION to 0
-                        )
+                            GltfAttribute.POSITION to (if (hasIndices) 1 else 0)
+                        ),
+                        indices = if (hasIndices) 0 else null
                     )
                 )
             )

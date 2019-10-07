@@ -319,6 +319,7 @@ data class Scene(
 
 fun Gltf.toJson(prettyPrinting: Boolean = false): String {
     val builder = GsonBuilder()
+    builder.disableHtmlEscaping()
     if (prettyPrinting) {
         builder.setPrettyPrinting()
     }
