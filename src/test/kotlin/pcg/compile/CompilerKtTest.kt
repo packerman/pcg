@@ -16,7 +16,7 @@ import java.io.File
 internal class CompilerKtTest {
 
     @Test
-    fun shouldCompileScene() {
+    fun shouldCompileTriangleWithoutIndices() {
         val g = geometry {
             mesh {
                 vertexArray3f(attribute = Position) {
@@ -84,6 +84,95 @@ internal class CompilerKtTest {
         )
         assertEquals(expectedGltf, compiledGltf)
         File("TriangleWithoutIndices.gltf").writeText(compiledGltf.toJson(true))
+    }
+
+    @Test
+    fun shouldCompileTriangleWithIndices() {
+        val g = geometry {
+            mesh {
+                vertexArray3f(attribute = Position) {
+                    add(0f, 0f, 0f)
+                    add(1f, 0f, 0f)
+                    add(0f, 1f, 0f)
+                }
+                indexArray {
+                    add(0, 1, 2)
+                }
+            }
+        }
+        val m = Material()
+        val s = scene {
+            node(geometry = g, material = m)
+        }
+
+        val compiledGltf = compile(s)
+
+        val expectedGltf = Gltf(
+            scene = 0,
+            scenes = listOf(
+                Scene(
+                    nodes = listOf(
+                        0
+                    )
+                )
+            ),
+            nodes = listOf(
+                Node(
+                    mesh = 0
+                )
+            ),
+            meshes = listOf(
+                Mesh(
+                    primitives = listOf(
+                        Primitive(
+                            attributes = mapOf(
+                                Attribute.POSITION to 0
+                            )
+                        )
+                    )
+                )
+            ),
+            bufferViews = listOf(
+                BufferView(
+                    buffer = 0,
+                    byteOffset = 0,
+                    byteLength = 6,
+                    target = Target.ELEMENT_ARRAY_BUFFER
+                ),
+                BufferView(
+                    buffer = 0,
+                    byteOffset = 8,
+                    byteLength = 36,
+                    target = Target.ARRAY_BUFFER
+                )
+            ),
+            accessors = listOf(
+                Accessor(
+                    bufferView = 0,
+                    componentType = ComponentType.UNSIGNED_SHORT,
+                    count = 3,
+                    type = Type.SCALAR,
+                    max = listOf(2.toShort()),
+                    min = listOf(0.toShort())
+                ),
+                Accessor(
+                    bufferView = 1,
+                    componentType = ComponentType.FLOAT,
+                    count = 3,
+                    type = Type.VEC3,
+                    max = listOf(1f, 1f, 0f),
+                    min = listOf(0f, 0f, 0f)
+                )
+            ),
+            buffers = listOf(
+                Buffer(
+                    byteLength = 44,
+                    uri = "data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAA="
+                )
+            )
+        )
+        assertEquals(expectedGltf, compiledGltf)
+        File("TriangleWithIndices.gltf").writeText(compiledGltf.toJson(true))
     }
 
     companion object {

@@ -52,21 +52,43 @@ private val Scene.geometries: Set<Geometry>
 //TODO - this should be mesh compiler
 class GeometryCompiler(private val geometry: Geometry) {
 
-    val accessorMap: Map<GltfAttribute, Accessor> by lazy { createAccessors() }
+    val accessorMap: Map<GltfAttribute, Accessor> by lazy { createVertexAccessors() }
 
-    val accessors: Collection<Accessor> = accessorMap.values
+    private val indexAccessors: List<Accessor> by lazy { createIndexAccessors() }
+
+    val accessors: Collection<Accessor> by lazy { indexAccessors + accessorMap.values }
 
     val bufferViews: Collection<BufferView> by lazy { createBufferViews() }
 
     val buffer: Buffer by lazy { createBuffer() }
 
-    private fun createAccessors(): Map<GltfAttribute, Accessor> {
-        val mesh = geometry.meshes[0]
+    private val mesh = geometry.meshes[0]
+
+    private fun createIndexAccessors(): List<Accessor> {
+        return mesh.indexArrays.map { indexArray ->
+            Accessor(
+                bufferView = 0,
+                componentType = ComponentType.UNSIGNED_SHORT,
+                count = indexArray.count,
+                type = Type.SCALAR,
+                max = when (indexArray) {
+                    is ShortIndexArray -> listOf(indexArray.max)
+                    else -> unknownIndexArrayTypeError(indexArray)
+                },
+                min = when (indexArray) {
+                    is ShortIndexArray -> listOf(indexArray.min)
+                    else -> unknownIndexArrayTypeError(indexArray)
+                }
+            )
+        }
+    }
+
+    private fun createVertexAccessors(): Map<GltfAttribute, Accessor> {
 
         return mesh.vertexArrays.map { (attribute, vertexArray) ->
             val resultAttribute = requireNotNull(attributeMap[attribute]) { "Unknown attribute: $attribute" }
             val accessor = Accessor(
-                bufferView = 0,
+                bufferView = if (mesh.indexArrays.isEmpty()) 0 else 1,
                 componentType = when (vertexArray) {
                     is Float3VertexArray -> ComponentType.FLOAT
                     else -> unknownVertexArrayTypeError(vertexArray)
@@ -86,32 +108,49 @@ class GeometryCompiler(private val geometry: Geometry) {
                 }
             )
             return@map resultAttribute to accessor
-        }.toMap()
+        }.toMap();
     }
 
     private fun createBufferViews(): List<BufferView> {
-        val mesh = geometry.meshes[0]
-
-        return listOf(
+        val bufferViews = mutableListOf<BufferView>()
+        if (mesh.indexArrays.isNotEmpty()) {
+            bufferViews.add(
+                BufferView(
+                    buffer = 0,
+                    byteOffset = 0,
+                    byteLength = mesh.indexArrays.byteSize,
+                    target = Target.ELEMENT_ARRAY_BUFFER
+                )
+            )
+        }
+        bufferViews.add(
             BufferView(
                 buffer = 0,
-                byteLength = mesh.byteSize,
+                byteOffset = mesh.indexArrays.alignedByteSize,
+                byteLength = mesh.vertexArrays.values.byteSize,
                 target = Target.ARRAY_BUFFER
             )
         )
+
+        return bufferViews
     }
 
     private fun createBuffer(): Buffer {
-        val mesh = geometry.meshes[0]
-
-        val byteArray = ByteArray(mesh.byteSize)
+        val byteArray = ByteArray(mesh.alignedByteSize)
         val byteBuffer = ByteBuffer
             .wrap(byteArray)
             .order(ByteOrder.LITTLE_ENDIAN)
+        mesh.indexArrays.forEach { indexArray ->
+            indexArray.copyToByteBuffer(byteBuffer)
+            val remaining = indexArray.alignedByteSize - indexArray.byteSize
+            (1..remaining).forEach { _ ->
+                byteBuffer.put(0)
+            }
+        }
         mesh.vertexArrays.values.forEach { it.copyToByteBuffer(byteBuffer) }
 
         return Buffer(
-            byteLength = mesh.byteSize,
+            byteLength = mesh.alignedByteSize,
             uri = BASE64_DATA_URI_PREFIX + "," + getBase64Encoder().encodeToString(byteArray)
         )
     }
@@ -126,7 +165,10 @@ class GeometryCompiler(private val geometry: Geometry) {
         private fun unknownVertexArrayTypeError(vertexArray: VertexArray<*>): Nothing =
             error("Unknown Vertex Array type: ${vertexArray::class}")
 
-        private fun getBase64Encoder() = Base64.getUrlEncoder()
+        private fun unknownIndexArrayTypeError(indexArray: IndexArray<*>): Nothing =
+            error("Unknown Vertex Array type: ${indexArray::class}")
+
+        private fun getBase64Encoder() = Base64.getEncoder()
 
         private const val BASE64_DATA_URI_PREFIX = "data:application/octet-stream;base64"
     }

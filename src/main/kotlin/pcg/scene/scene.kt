@@ -16,16 +16,32 @@ import java.nio.ByteBuffer
 
 data class Color(val red: Float, val green: Float, val blue: Float, val alpha: Float = 1f)
 
-abstract class IndexArray : ByteSized {
+interface IndexArray<T> : ByteSized {
+    val count: Int
 
+    val max: T
+    val min: T
+
+    fun copyToByteBuffer(byteBuffer: ByteBuffer)
 }
 
-class ShortIndexArray(val indices: ShortArray) : IndexArray() {
-
+class ShortIndexArray(private val indices: ShortArray) : IndexArray<Short> {
     override val byteSize: Int = 2 * indices.size
 
+    override val count: Int = indices.size
+
+    override val max: Short = indices.max() ?: Short.MIN_VALUE
+
+    override val min: Short = indices.min() ?: Short.MAX_VALUE
+
+    override fun copyToByteBuffer(byteBuffer: ByteBuffer) = with(byteBuffer) {
+        for (index in indices) {
+            putShort(index)
+        }
+    }
+
     companion object {
-        class ShortIndexArrayBuilder : Builder<IndexArray> {
+        class ShortIndexArrayBuilder : Builder<ShortIndexArray> {
             private val indices = mutableListOf<Short>()
 
             fun add(i: Short, j: Short, k: Short) {
@@ -34,7 +50,7 @@ class ShortIndexArray(val indices: ShortArray) : IndexArray() {
                 indices.add(k)
             }
 
-            override fun build(): IndexArray = ShortIndexArray(indices.toShortArray())
+            override fun build(): ShortIndexArray = ShortIndexArray(indices.toShortArray())
         }
     }
 }
@@ -82,10 +98,10 @@ class Material(
 class Mesh(
     val primitive: Primitive = Triangles,
     val vertexArrays: Map<Attribute, VertexArray<*>>,
-    val indexArrays: List<IndexArray>
+    val indexArrays: List<IndexArray<*>>
 ) : ByteSized {
     override val byteSize: Int =
-        vertexArrays.values.sumBy(VertexArray<*>::byteSize) + indexArrays.sumBy(IndexArray::byteSize)
+        vertexArrays.values.sumBy(VertexArray<*>::byteSize) + indexArrays.sumBy(IndexArray<*>::byteSize)
 
     init {
         requireNotEmpty(vertexArrays, "vertexArrays")
@@ -110,7 +126,7 @@ class Mesh(
         class MeshBuilder(val primitive: Primitive) : Builder<Mesh> {
 
             private val vertexArrays = mutableMapOf<Attribute, VertexArray<*>>()
-            private val indexArrays = mutableListOf<IndexArray>()
+            private val indexArrays = mutableListOf<IndexArray<*>>()
 
             fun vertexArray3f(
                 attribute: Attribute,
@@ -183,14 +199,14 @@ class Float3VertexArray(private val vertices: Array<Vector3fc>) : VertexArray<Ve
 
     companion object {
 
-        class Float3VertexArrayBuilder : Builder<VertexArray<Vector3fc>> {
+        class Float3VertexArrayBuilder : Builder<Float3VertexArray> {
             private val vertices = mutableListOf<Vector3fc>()
 
             fun add(x: Float, y: Float, z: Float) {
                 vertices.add(Vector3f(x, y, z))
             }
 
-            override fun build(): VertexArray<Vector3fc> = Float3VertexArray(vertices.toTypedArray())
+            override fun build(): Float3VertexArray = Float3VertexArray(vertices.toTypedArray())
         }
 
         private fun maxVector(array: Array<Vector3fc>): Vector3fc {
@@ -230,6 +246,17 @@ class Float3VertexArray(private val vertices: Array<Vector3fc>) : VertexArray<Ve
 interface ByteSized {
     val byteSize: Int
 }
+
+val ByteSized.alignedByteSize: Int
+    get() = align(byteSize, 4)
+
+fun align(n: Int, b: Int): Int = if (n % b == 0) n else n + b - n % b
+
+val Iterable<out ByteSized>.byteSize: Int
+    get() = this.sumBy(ByteSized::byteSize)
+
+val Iterable<out ByteSized>.alignedByteSize: Int
+    get() = this.sumBy(ByteSized::alignedByteSize)
 
 interface Builder<out T> {
     fun build(): T
