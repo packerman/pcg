@@ -4,20 +4,22 @@ import pcg.gltf.*
 import pcg.gltf.Accessor.Companion.ComponentType
 import pcg.gltf.Accessor.Companion.Type
 import pcg.gltf.BufferView.Companion.Target
-import pcg.gltf.Mesh
-import pcg.gltf.Node
 import pcg.scene.*
 import pcg.scene.Mesh.Companion.Attribute
+import pcg.scene.Node
 import pcg.scene.Scene
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
+import pcg.gltf.Mesh as GltfMesh
+import pcg.gltf.Node as GltfNode
 import pcg.gltf.Primitive.Companion.Attribute as GltfAttribute
 import pcg.gltf.Scene as GltfScene
 
 fun compile(scene: Scene): Gltf {
-    val geometries = scene.geometries
-    val compiledGeometries = geometries.map(::GeometryCompiler)
+    val geometriesByNode: Map<in Node, Geometry> = scene.geometriesByNode
+    val geometries = geometriesByNode.values.toSet()
+    val compiledGeometries = geometries.map { it to GeometryCompiler(it) }.toMap()
 
     val hasIndices = scene.geometries
         .map { g -> g.meshes[0] }
@@ -31,9 +33,9 @@ fun compile(scene: Scene): Gltf {
                 scene.nodes.mapIndexed { n, _ -> n }
             )
         ),
-        nodes = scene.nodes.map { _ -> Node(mesh = 0) },
+        nodes = scene.nodes.map { _ -> GltfNode(mesh = 0) },
         meshes = listOf(
-            Mesh(
+            GltfMesh(
                 primitives = listOf(
                     Primitive(
                         mapOf(
@@ -44,9 +46,9 @@ fun compile(scene: Scene): Gltf {
                 )
             )
         ),
-        accessors = compiledGeometries.flatMap(GeometryCompiler::accessors),
-        bufferViews = compiledGeometries.flatMap { it.bufferViews },
-        buffers = compiledGeometries.map(GeometryCompiler::buffer)
+        accessors = compiledGeometries.values.flatMap(GeometryCompiler::accessors),
+        bufferViews = compiledGeometries.values.flatMap { it.bufferViews },
+        buffers = compiledGeometries.values.map(GeometryCompiler::buffer)
     )
 }
 
@@ -55,7 +57,13 @@ private val Scene.geometries: Set<Geometry>
         .flatMap { n -> if (n is GeometryNode) listOf(n.geometry) else emptyList() }
         .toSet()
 
-//TODO - this should be mesh compiler
+private val Scene.geometriesByNode: Map<in Node, Geometry>
+    get() = nodes
+        .map { n -> n as? GeometryNode }
+        .filterNotNull()
+        .map { n -> n to n.geometry }
+        .toMap()
+
 class GeometryCompiler(private val geometry: Geometry) {
 
     val accessorMap: Map<GltfAttribute, Accessor> by lazy { createVertexAccessors() }
@@ -91,10 +99,13 @@ class GeometryCompiler(private val geometry: Geometry) {
 
     private fun createVertexAccessors(): Map<GltfAttribute, Accessor> {
 
+        val byteOffsets = getVertexByteOffsets(mesh.vertexArrays)
+
         return mesh.vertexArrays.map { (attribute, vertexArray) ->
             val resultAttribute = requireNotNull(attributeMap[attribute]) { "Unknown attribute: $attribute" }
             val accessor = Accessor(
                 bufferView = if (mesh.indexArrays.isEmpty()) 0 else 1,
+                byteOffset = requireNotNull(byteOffsets[attribute]) { "Unknown attribute: $attribute" },
                 componentType = when (vertexArray) {
                     is Float3VertexArray -> ComponentType.FLOAT
                     else -> unknownVertexArrayTypeError(vertexArray)
@@ -168,6 +179,15 @@ class GeometryCompiler(private val geometry: Geometry) {
             Attribute.TexCoord to GltfAttribute.TEXCOORD_0
         )
 
+        private fun getVertexByteOffsets(vertexArrays: Map<Attribute, VertexArray<*>>): Map<Attribute, Int> =
+            mutableMapOf<Attribute, Int>().apply {
+                var offset = 0
+                for ((attribute, vertexArray) in vertexArrays) {
+                    this[attribute] = offset
+                    offset += vertexArray.byteSize
+                }
+            }
+
         private fun unknownVertexArrayTypeError(vertexArray: VertexArray<*>): Nothing =
             error("Unknown Vertex Array type: ${vertexArray::class}")
 
@@ -177,5 +197,11 @@ class GeometryCompiler(private val geometry: Geometry) {
         private fun getBase64Encoder() = Base64.getEncoder()
 
         private const val BASE64_DATA_URI_PREFIX = "data:application/octet-stream;base64"
+
+        private fun <T> indexSet(elements: Set<T>): Map<T, Int> = mutableMapOf<T, Int>().apply {
+            elements.forEachIndexed { index, elem ->
+                putIfAbsent(elem, index)
+            }
+        }
     }
 }
