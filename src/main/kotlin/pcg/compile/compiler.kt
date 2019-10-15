@@ -21,31 +21,41 @@ fun compile(scene: Scene): Gltf {
     val geometries = geometriesByNode.values.toSet()
     val compiledGeometries = geometries.map { it to GeometryCompiler(it) }.toMap()
 
-    val hasIndices = scene.geometries
-        .map { g -> g.meshes[0] }
-        .any { m -> m.indexArrays.isNotEmpty() }
+    val meshByNode: Map<Node, GltfMesh> = scene.nodes
+        .mapNotNull { it as? GeometryNode }
+        .map { node ->
+            val compiledGeometry = compiledGeometries.getValue(node.geometry)
+            val mesh = GltfMesh(
+                primitives = if (compiledGeometry.indices.isEmpty()) listOf(
+                    Primitive(
+                        attributes = compiledGeometry.attributes
+                    )
+                ) else compiledGeometry.indices.map {
+                    Primitive(
+                        attributes = compiledGeometry.attributes,
+                        indices = it
+                    )
+                }
+            )
+            node to mesh
+        }
+        .toMap()
 
+    val meshIndex = indexElements(meshByNode.values)
 
     return Gltf(
         scene = 0,
         scenes = listOf(
             GltfScene(
-                scene.nodes.mapIndexed { n, _ -> n }
+                nodes = scene.nodes.indices.toList()
             )
         ),
-        nodes = scene.nodes.map { _ -> GltfNode(mesh = 0) },
-        meshes = listOf(
-            GltfMesh(
-                primitives = listOf(
-                    Primitive(
-                        mapOf(
-                            GltfAttribute.POSITION to (if (hasIndices) 1 else 0)
-                        ),
-                        indices = if (hasIndices) 0 else null
-                    )
-                )
+        nodes = scene.nodes.map { node ->
+            GltfNode(
+                mesh = meshByNode[node]?.let { meshIndex.getValue(it) }
             )
-        ),
+        },
+        meshes = meshIndex.keys.toList(),
         accessors = compiledGeometries.values.flatMap(GeometryCompiler::accessors),
         bufferViews = compiledGeometries.values.flatMap { it.bufferViews },
         buffers = compiledGeometries.values.map(GeometryCompiler::buffer)
@@ -58,25 +68,35 @@ private val Scene.geometries: Set<Geometry>
         .toSet()
 
 private val Scene.geometriesByNode: Map<in Node, Geometry>
-    get() = nodes
-        .map { n -> n as? GeometryNode }
-        .filterNotNull()
+    get() = nodes.mapNotNull { n -> n as? GeometryNode }
         .map { n -> n to n.geometry }
         .toMap()
 
+fun <T> indexElements(elements: Iterable<T>): Map<T, Int> = mutableMapOf<T, Int>().apply {
+    elements.forEach { elem ->
+        putIfAbsent(elem, size)
+    }
+}
+
 class GeometryCompiler(private val geometry: Geometry) {
 
-    val accessorMap: Map<GltfAttribute, Accessor> by lazy { createVertexAccessors() }
+    private val vertexAccessors: List<Accessor> by lazy { createVertexAccessors() }
 
     private val indexAccessors: List<Accessor> by lazy { createIndexAccessors() }
 
-    val accessors: Collection<Accessor> by lazy { indexAccessors + accessorMap.values }
+    val accessors: Collection<Accessor> by lazy { indexAccessors + vertexAccessors }
 
     val bufferViews: Collection<BufferView> by lazy { createBufferViews() }
 
     val buffer: Buffer by lazy { createBuffer() }
 
     private val mesh = geometry.meshes[0]
+
+    val attributes: Map<GltfAttribute, Int> = mesh.vertexArrays.keys.mapIndexed { index, attribute ->
+        attributeMap.getValue(attribute) to index + indexAccessors.size
+    }.toMap()
+
+    val indices: List<Int> = indexAccessors.indices.toList()
 
     private fun createIndexAccessors(): List<Accessor> {
         return mesh.indexArrays.map { indexArray ->
@@ -97,13 +117,12 @@ class GeometryCompiler(private val geometry: Geometry) {
         }
     }
 
-    private fun createVertexAccessors(): Map<GltfAttribute, Accessor> {
+    private fun createVertexAccessors(): List<Accessor> {
 
         val byteOffsets = getVertexByteOffsets(mesh.vertexArrays)
 
         return mesh.vertexArrays.map { (attribute, vertexArray) ->
-            val resultAttribute = requireNotNull(attributeMap[attribute]) { "Unknown attribute: $attribute" }
-            val accessor = Accessor(
+            Accessor(
                 bufferView = if (mesh.indexArrays.isEmpty()) 0 else 1,
                 byteOffset = requireNotNull(byteOffsets[attribute]) { "Unknown attribute: $attribute" },
                 componentType = when (vertexArray) {
@@ -124,8 +143,7 @@ class GeometryCompiler(private val geometry: Geometry) {
                     else -> unknownVertexArrayTypeError(vertexArray)
                 }
             )
-            return@map resultAttribute to accessor
-        }.toMap();
+        }
     }
 
     private fun createBufferViews(): List<BufferView> {
@@ -197,11 +215,5 @@ class GeometryCompiler(private val geometry: Geometry) {
         private fun getBase64Encoder() = Base64.getEncoder()
 
         private const val BASE64_DATA_URI_PREFIX = "data:application/octet-stream;base64"
-
-        private fun <T> indexSet(elements: Set<T>): Map<T, Int> = mutableMapOf<T, Int>().apply {
-            elements.forEachIndexed { index, elem ->
-                putIfAbsent(elem, index)
-            }
-        }
     }
 }

@@ -288,7 +288,7 @@ internal class CompilerKtTest {
         @SuppressWarnings("ConstantConditions")
         fun writeToFile(fileName: String, gltf: Gltf) {
             if (writeToFiles) {
-                File(fileName).writeText(gltf.toJson(false))
+                File(fileName).writeText(gltf.toJson(true))
             }
         }
     }
