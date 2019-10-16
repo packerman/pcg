@@ -139,6 +139,16 @@ data class Gltf(
                     )
                 }
             }
+
+            val accessorsByBufferView: Map<Int?, List<Accessor>> = it.groupBy(Accessor::bufferView)
+            accessorsByBufferView.forEach { (bufferViewIndex, accessors) ->
+                val bufferView = bufferViewIndex?.let { i -> bufferViews?.get(i) }
+                require(
+                    bufferView == null ||
+                            accessors.size == 1 ||
+                            bufferView.byteStride != null
+                ) { "When two or more accessors use the same bufferView, byteStride must be defined." }
+            }
         }
         buffers?.let { requireNotEmpty(it, "buffers") }
         bufferViews?.let {
