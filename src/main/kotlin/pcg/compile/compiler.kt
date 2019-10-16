@@ -5,9 +5,11 @@ import pcg.gltf.Accessor.Companion.ComponentType
 import pcg.gltf.Accessor.Companion.Type
 import pcg.gltf.BufferView.Companion.Target
 import pcg.scene.*
+import pcg.scene.Mesh
 import pcg.scene.Mesh.Companion.Attribute
 import pcg.scene.Node
 import pcg.scene.Scene
+import pcg.util.indexElements
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
@@ -16,12 +18,39 @@ import pcg.gltf.Node as GltfNode
 import pcg.gltf.Primitive.Companion.Attribute as GltfAttribute
 import pcg.gltf.Scene as GltfScene
 
-fun compile(scene: Scene): Gltf {
-    val geometriesByNode: Map<in Node, Geometry> = scene.geometriesByNode
-    val geometries = geometriesByNode.values.toSet()
-    val compiledGeometries = geometries.map { it to GeometryCompiler(it) }.toMap()
+fun compile(scene: Scene): Gltf =
+    SceneCompiler(scene).compile()
 
-    val meshByNode: Map<Node, GltfMesh> = scene.nodes
+class SceneCompiler(private val scene: Scene) {
+
+    fun compile() = Gltf(
+        scene = 0,
+        scenes = listOf(
+            GltfScene(
+                nodes = scene.nodes.indices.toList()
+            )
+        ),
+        nodes = scene.nodes.map { node ->
+            GltfNode(
+                mesh = meshByNode[node]?.let { meshIndex.getValue(it) }
+            )
+        },
+        meshes = meshIndex.keys.toList(),
+        accessors = compiledGeometries.values.flatMap(GeometryCompiler::accessors),
+        bufferViews = compiledGeometries.values.flatMap { it.bufferViews },
+        buffers = compiledGeometries.values.map(GeometryCompiler::buffer)
+    )
+
+    private val geometriesByNode: Map<in Node, Geometry>
+        get() = scene.nodes.mapNotNull { n -> n as? GeometryNode }
+            .map { n -> n to n.geometry }
+            .toMap()
+
+    private val geometries = geometriesByNode.values.toSet()
+
+    private val compiledGeometries = geometries.map { it to GeometryCompiler(it) }.toMap()
+
+    private val meshByNode: Map<Node, GltfMesh> = scene.nodes
         .mapNotNull { it as? GeometryNode }
         .map { node ->
             val compiledGeometry = compiledGeometries.getValue(node.geometry)
@@ -41,44 +70,25 @@ fun compile(scene: Scene): Gltf {
         }
         .toMap()
 
-    val meshIndex = indexElements(meshByNode.values)
-
-    return Gltf(
-        scene = 0,
-        scenes = listOf(
-            GltfScene(
-                nodes = scene.nodes.indices.toList()
-            )
-        ),
-        nodes = scene.nodes.map { node ->
-            GltfNode(
-                mesh = meshByNode[node]?.let { meshIndex.getValue(it) }
-            )
-        },
-        meshes = meshIndex.keys.toList(),
-        accessors = compiledGeometries.values.flatMap(GeometryCompiler::accessors),
-        bufferViews = compiledGeometries.values.flatMap { it.bufferViews },
-        buffers = compiledGeometries.values.map(GeometryCompiler::buffer)
-    )
+    private val meshIndex = indexElements(meshByNode.values)
 }
 
-private val Scene.geometries: Set<Geometry>
-    get() = nodes
-        .flatMap { n -> if (n is GeometryNode) listOf(n.geometry) else emptyList() }
-        .toSet()
+class GeometryCompiler(geometry: Geometry) {
 
-private val Scene.geometriesByNode: Map<in Node, Geometry>
-    get() = nodes.mapNotNull { n -> n as? GeometryNode }
-        .map { n -> n to n.geometry }
-        .toMap()
+    private val compiledMesh = MeshCompiler(geometry.meshes[0])
 
-fun <T> indexElements(elements: Iterable<T>): Map<T, Int> = mutableMapOf<T, Int>().apply {
-    elements.forEach { elem ->
-        putIfAbsent(elem, size)
-    }
+    val accessors: Collection<Accessor> by lazy { compiledMesh.accessors }
+
+    val bufferViews: Collection<BufferView> by lazy { compiledMesh.bufferViews }
+
+    val buffer: Buffer by lazy { compiledMesh.buffer }
+
+    val attributes: Map<GltfAttribute, Int> = compiledMesh.attributes
+
+    val indices: List<Int> = compiledMesh.indices
 }
 
-class GeometryCompiler(private val geometry: Geometry) {
+class MeshCompiler(private val mesh: Mesh) {
 
     private val vertexAccessors: List<Accessor> by lazy { createVertexAccessors() }
 
@@ -89,8 +99,6 @@ class GeometryCompiler(private val geometry: Geometry) {
     val bufferViews: Collection<BufferView> by lazy { createBufferViews() }
 
     val buffer: Buffer by lazy { createBuffer() }
-
-    private val mesh = geometry.meshes[0]
 
     val attributes: Map<GltfAttribute, Int> = mesh.vertexArrays.keys.mapIndexed { index, attribute ->
         attributeMap.getValue(attribute) to index + indexAccessors.size
