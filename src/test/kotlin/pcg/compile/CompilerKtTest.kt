@@ -35,7 +35,6 @@ internal class CompilerKtTest {
         val compiledGltf = compile(s)
 
         val expectedGltf = Gltf(
-            scene = 0,
             scenes = listOf(
                 Scene(
                     nodes = listOf(
@@ -109,7 +108,6 @@ internal class CompilerKtTest {
         val compiledGltf = compile(s)
 
         val expectedGltf = Gltf(
-            scene = 0,
             scenes = listOf(
                 Scene(
                     nodes = listOf(
@@ -205,7 +203,6 @@ internal class CompilerKtTest {
         val compiledGltf = compile(s)
 
         val expectedGltf = Gltf(
-            scene = 0,
             scenes = listOf(
                 Scene(
                     nodes = listOf(

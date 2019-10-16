@@ -24,7 +24,6 @@ fun compile(scene: Scene): Gltf =
 class SceneCompiler(private val scene: Scene) {
 
     fun compile() = Gltf(
-        scene = 0,
         scenes = listOf(
             GltfScene(
                 nodes = scene.nodes.indices.toList()
