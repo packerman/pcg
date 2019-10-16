@@ -199,6 +199,7 @@ internal class CompilerKtTest {
         val m = Material()
         val s = scene {
             node(geometry = g, material = m)
+            node(geometry = g, material = m)
         }
 
         val compiledGltf = compile(s)
@@ -208,11 +209,14 @@ internal class CompilerKtTest {
             scenes = listOf(
                 Scene(
                     nodes = listOf(
-                        0
+                        0, 1
                     )
                 )
             ),
             nodes = listOf(
+                Node(
+                    mesh = 0
+                ),
                 Node(
                     mesh = 0
                 )
