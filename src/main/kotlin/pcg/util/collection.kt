@@ -5,3 +5,10 @@ fun <T> indexElements(elements: Iterable<T>): Map<T, Int> = mutableMapOf<T, Int>
         putIfAbsent(elem, size)
     }
 }
+
+fun <T> allTheSame(elements: Collection<T>): Boolean =
+    if (elements.isEmpty()) true
+    else {
+        val first = elements.first()
+        elements.all { it == first }
+    }

@@ -9,6 +9,7 @@ import pcg.scene.Mesh
 import pcg.scene.Mesh.Companion.Attribute
 import pcg.scene.Node
 import pcg.scene.Scene
+import pcg.util.allTheSame
 import pcg.util.indexElements
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -154,6 +155,7 @@ class MeshCompiler(private val mesh: Mesh) {
     }
 
     private fun createBufferViews(): List<BufferView> {
+        require(allTheSame(mesh.vertexArrays.values.map(VertexArray<*>::byteStride))) { "All Vertex Arrays need to have the same byteStride (Constraint to be removed)" }
         val bufferViews = mutableListOf<BufferView>()
         if (mesh.indexArrays.isNotEmpty()) {
             bufferViews.add(
@@ -170,6 +172,7 @@ class MeshCompiler(private val mesh: Mesh) {
                 buffer = 0,
                 byteOffset = mesh.indexArrays.alignedByteSize,
                 byteLength = mesh.vertexArrays.values.byteSize,
+                byteStride = if (mesh.vertexArrays.size > 1) mesh.vertexArrays.values.first().byteStride else null,
                 target = Target.ARRAY_BUFFER
             )
         )

@@ -145,6 +145,7 @@ data class Gltf(
                 val bufferView = bufferViewIndex?.let { i -> bufferViews?.get(i) }
                 require(
                     bufferView == null ||
+                            bufferView.target != Target.ARRAY_BUFFER ||
                             accessors.size == 1 ||
                             bufferView.byteStride != null
                 ) { "When two or more accessors use the same bufferView, byteStride must be defined." }

@@ -177,10 +177,13 @@ interface VertexArray<T> : ByteSized {
     val max: T
     val min: T
 
+    val byteStride: Int
+
     fun copyToByteBuffer(byteBuffer: ByteBuffer)
 }
 
 class Float3VertexArray(private val vertices: Array<Vector3fc>) : VertexArray<Vector3fc> {
+
     override val byteSize: Int = 3 * 4 * vertices.size
 
     override val count: Int = vertices.size
@@ -188,6 +191,8 @@ class Float3VertexArray(private val vertices: Array<Vector3fc>) : VertexArray<Ve
     override val max: Vector3fc by lazy { maxVector(vertices) }
 
     override val min: Vector3fc by lazy { minVector(vertices) }
+
+    override val byteStride: Int = 12
 
     override fun copyToByteBuffer(byteBuffer: ByteBuffer) = with(byteBuffer) {
         for (vertex in vertices) {

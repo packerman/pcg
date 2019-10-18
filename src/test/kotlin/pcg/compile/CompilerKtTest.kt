@@ -242,6 +242,7 @@ internal class CompilerKtTest {
                     buffer = 0,
                     byteOffset = 8,
                     byteLength = 72,
+                    byteStride = 12,
                     target = Target.ARRAY_BUFFER
                 )
             ),
