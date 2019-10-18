@@ -14,7 +14,7 @@ import pcg.scene.geometry
 import pcg.scene.scene
 import java.io.File
 
-internal class CompilerKtTest {
+internal class SceneKtTest {
 
     @Test
     fun shouldCompileTriangleWithoutIndices() {

@@ -37,9 +37,7 @@ class SceneCompiler(private val scene: Scene) {
         get() = scene.nodes.mapNotNull { n -> n as? GeometryNode }
             .map { n -> n to n.geometry }
             .toMap()
-
     private val geometries = geometriesByNode.values.toSet()
-
     private val compiledGeometries = geometries.map { it to GeometryCompiler(it) }.toMap()
 
     private val meshByNode: Map<Node, GltfMesh> = scene.nodes
