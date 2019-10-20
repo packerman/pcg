@@ -4,11 +4,10 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonPrimitive
 import com.google.gson.JsonSerializer
 import pcg.gltf.Accessor.Companion.ComponentType
-import pcg.gltf.Accessor.Companion.Type
 import pcg.gltf.BufferView.Companion.Target
-import pcg.gltf.Primitive.Companion.Attribute
 import pcg.gltf.Primitive.Companion.Mode
 import pcg.validate.*
+import java.io.File
 import kotlin.reflect.KClass
 
 /**
@@ -358,107 +357,7 @@ fun Gltf.toJson(prettyPrinting: Boolean = false): String {
     return gson.toJson(this)
 }
 
-fun main() {
-    val gltf = Gltf(
-        asset = Asset.default,
-        scene = 0,
-        scenes = listOf(
-            Scene(nodes = listOf(0))
-        ),
-        nodes = listOf(
-            Node(
-                children = listOf(1),
-                matrix = floatArrayOf(
-                    1.0f, 0.0f, 0.0f, 0.0f,
-                    0.0f, 0.0f, -1.0f, 0.0f,
-                    0.0f, 1.0f, 0.0f, 0.0f,
-                    0.0f, 0.0f, 0.0f, 1.0f
-                )
-            ),
-            Node(
-                mesh = 0
-            )
-        ),
-        meshes = listOf(
-            Mesh(
-                primitives = listOf(
-                    Primitive(
-                        attributes = mapOf(
-                            Attribute.NORMAL to 1,
-                            Attribute.POSITION to 2
-                        ),
-                        indices = 0,
-                        mode = Mode.TRIANGLES,
-                        material = 0
-                    )
-                ),
-                name = "Mesh"
-            )
-        ),
-        accessors = listOf(
-            Accessor(
-                bufferView = 0,
-                byteOffset = 0,
-                componentType = ComponentType.UNSIGNED_SHORT,
-                count = 36,
-                max = listOf(23.toShort()),
-                min = listOf(0.toShort()),
-                type = Type.SCALAR
-            ),
-            Accessor(
-                bufferView = 1,
-                byteOffset = 0,
-                componentType = ComponentType.FLOAT,
-                count = 24,
-                max = listOf(1f, 1f, 1f),
-                min = listOf(-1f, -1f, -1f),
-                type = Type.VEC3
-            ),
-            Accessor(
-                bufferView = 1,
-                byteOffset = 288,
-                componentType = ComponentType.FLOAT,
-                count = 24,
-                max = listOf(0.5f, 0.5f, 0.5f),
-                min = listOf(-0.5f, -0.5f, -0.5f),
-                type = Type.VEC3
-            )
-        ),
-        materials = listOf(
-            Material(
-                pbrMetallicRoughness = PbrMetallicRoughness(
-                    baseColorFactor = floatArrayOf(
-                        0.800000011920929f,
-                        0.0f,
-                        0.0f,
-                        1.0f
-                    ),
-                    metallicFactor = 0.0f
-                ),
-                name = "Red"
-            )
-        ),
-        bufferViews = listOf(
-            BufferView(
-                buffer = 0,
-                byteOffset = 576,
-                byteLength = 72,
-                target = Target.ELEMENT_ARRAY_BUFFER
-            ),
-            BufferView(
-                buffer = 0,
-                byteOffset = 0,
-                byteLength = 576,
-                byteStride = 12,
-                target = Target.ARRAY_BUFFER
-            )
-        ),
-        buffers = listOf(
-            Buffer(
-                byteLength = 648,
-                uri = "data:application/octet-stream;base64"
-            )
-        )
-    )
-    println(gltf.toJson(true))
+fun writeToFile(fileName: String, gltf: Gltf) {
+    File(fileName).writeText(gltf.toJson(true))
 }
+
