@@ -2,10 +2,7 @@ package pcg.compile
 
 import pcg.gltf.Gltf
 import pcg.gltf.Primitive
-import pcg.scene.Geometry
-import pcg.scene.GeometryNode
-import pcg.scene.Node
-import pcg.scene.Scene
+import pcg.scene.*
 import pcg.util.indexElements
 import pcg.gltf.Mesh as GltfMesh
 import pcg.gltf.Node as GltfNode
@@ -23,8 +20,14 @@ class SceneCompiler(private val scene: Scene) {
             )
         ),
         nodes = scene.nodes.map { node ->
+            check(node.transforms.size <= 1) { "Only one transform is supported so far (Constraint to be removed)" }
             GltfNode(
-                mesh = meshByNode[node]?.let { meshIndex.getValue(it) }
+                mesh = meshByNode[node]?.let { meshIndex.getValue(it) },
+                translation = node.transforms.firstOrNull()?.let { transform ->
+                    (transform as? Translation)?.let { translation ->
+                        floatArrayOf(translation.dx, translation.dy, transform.dz)
+                    }
+                }
             )
         },
         meshes = meshIndex.keys.toList(),

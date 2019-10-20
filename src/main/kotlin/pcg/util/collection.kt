@@ -12,3 +12,12 @@ fun <T> allTheSame(elements: Collection<T>): Boolean =
         val first = elements.first()
         elements.all { it == first }
     }
+
+fun ShortArray.intIterator(): IntIterator {
+    val iterator = iterator()
+    return object : IntIterator() {
+        override fun hasNext(): Boolean = iterator.hasNext()
+
+        override fun nextInt(): Int = iterator.nextShort().toInt()
+    }
+}

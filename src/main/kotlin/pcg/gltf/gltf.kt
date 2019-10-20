@@ -190,6 +190,9 @@ data class Material(
     val pbrMetallicRoughness: PbrMetallicRoughness? = null
 )
 
+/**
+ * @see <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-mesh"/>
+ */
 data class Mesh(
     val primitives: List<Primitive>,
     val name: String? = null
@@ -199,14 +202,26 @@ data class Mesh(
     }
 }
 
+/**
+ * @see <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-node"/>
+ */
 data class Node(
     val children: List<Int>? = null,
     val matrix: FloatArray? = null,
-    val mesh: Int? = null
+    val mesh: Int? = null,
+    val translation: FloatArray? = null
 ) {
     init {
         children?.let { requireNotEmpty(it, "children") }
         matrix?.let { requireSize(it, 16, "matrix") }
+        translation?.let { requireSize(it, 3, "translation") }
+        require(matrix == null || translation == null) { "Translation and matrix cannot be defined at the same time" }
+    }
+
+    companion object {
+        val default = Node(
+            matrix = floatArrayOf(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
+        )
     }
 
     override fun equals(other: Any?): Boolean {
@@ -219,6 +234,10 @@ data class Node(
             if (!matrix.contentEquals(other.matrix)) return false
         } else if (other.matrix != null) return false
         if (mesh != other.mesh) return false
+        if (translation != null) {
+            if (other.translation == null) return false
+            if (!translation.contentEquals(other.translation)) return false
+        } else if (other.translation != null) return false
 
         return true
     }
@@ -227,13 +246,8 @@ data class Node(
         var result = children?.hashCode() ?: 0
         result = 31 * result + (matrix?.contentHashCode() ?: 0)
         result = 31 * result + (mesh ?: 0)
+        result = 31 * result + (translation?.contentHashCode() ?: 0)
         return result
-    }
-
-    companion object {
-        val default = Node(
-            matrix = floatArrayOf(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
-        )
     }
 }
 

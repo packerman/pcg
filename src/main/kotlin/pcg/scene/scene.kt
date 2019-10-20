@@ -1,22 +1,27 @@
 package pcg.scene
 
+import org.joml.Matrix4f
 import org.joml.Vector3f
 import org.joml.Vector3fc
 import pcg.scene.Float3VertexArray.Companion.Float3VertexArrayBuilder
 import pcg.scene.Geometry.Companion.GeometryBuilder
+import pcg.scene.GeometryNode.Companion.GeometryNodeBuilder
 import pcg.scene.Mesh.Companion.Attribute.Normal
 import pcg.scene.Mesh.Companion.Attribute.Position
 import pcg.scene.Mesh.Companion.MeshBuilder
 import pcg.scene.Mesh.Companion.Primitive
 import pcg.scene.Mesh.Companion.Primitive.Triangles
+import pcg.scene.Node.Companion.NodeBuilder
 import pcg.scene.Scene.Companion.SceneBuilder
 import pcg.scene.ShortIndexArray.Companion.ShortIndexArrayBuilder
+import pcg.util.allTheSame
+import pcg.util.intIterator
 import pcg.validate.requireNotEmpty
 import java.nio.ByteBuffer
 
 data class Color(val red: Float, val green: Float, val blue: Float, val alpha: Float = 1f)
 
-interface IndexArray<T> : ByteSized {
+interface IndexArray<T> : ByteSized, Iterable<Int> {
     val count: Int
 
     val max: T
@@ -26,6 +31,7 @@ interface IndexArray<T> : ByteSized {
 }
 
 class ShortIndexArray(private val indices: ShortArray) : IndexArray<Short> {
+
     override val byteSize: Int = 2 * indices.size
 
     override val count: Int = indices.size
@@ -39,6 +45,8 @@ class ShortIndexArray(private val indices: ShortArray) : IndexArray<Short> {
             putShort(index)
         }
     }
+
+    override fun iterator(): IntIterator = indices.intIterator()
 
     companion object {
         class ShortIndexArrayBuilder : Builder<ShortIndexArray> {
@@ -83,7 +91,20 @@ class Geometry(val meshes: List<Mesh>) : ByteSized {
     }
 }
 
-class GeometryNode(val geometry: Geometry, val material: Material) : Node()
+class GeometryNode(
+    val geometry: Geometry,
+    val material: Material,
+    transforms: List<Transform>
+) : Node(transforms) {
+
+    companion object {
+
+        class GeometryNodeBuilder(private val geometry: Geometry, private val material: Material) : NodeBuilder() {
+
+            override fun build(): Node = GeometryNode(geometry, material, transforms)
+        }
+    }
+}
 
 class Material(
     val name: String? = null,
@@ -105,6 +126,7 @@ class Mesh(
 
     init {
         requireNotEmpty(vertexArrays, "vertexArrays")
+        require(allTheSame(vertexArrays.values.map(VertexArray<*>::count))) { "All Vertex Arrays need to have the same count" }
     }
 
     companion object {
@@ -146,7 +168,22 @@ class Mesh(
     }
 }
 
-open class Node {}
+open class Node(val transforms: List<Transform>) {
+
+    companion object {
+
+        open class NodeBuilder : Builder<Node> {
+
+            protected val transforms = mutableListOf<Transform>()
+
+            fun translate(dx: Float, dy: Float, dz: Float) {
+                transforms.add(Translation(dx, dy, dz))
+            }
+
+            override fun build() = Node(transforms)
+        }
+    }
+}
 
 fun scene(block: SceneBuilder.() -> Unit): Scene = SceneBuilder().apply(block).build()
 
@@ -162,14 +199,25 @@ class Scene(val nodes: List<Node>) {
                 nodes.add(node)
             }
 
-            fun node(geometry: Geometry, material: Material) {
-                nodes.add(GeometryNode(geometry, material))
+            fun node(geometry: Geometry, material: Material, block: GeometryNodeBuilder.() -> Unit = {}) {
+                nodes.add(GeometryNodeBuilder(geometry, material).apply(block).build())
             }
 
             override fun build(): Scene = Scene(nodes)
         }
     }
 }
+
+interface Transform {
+
+    fun getMatrix(m: Matrix4f): Matrix4f
+}
+
+class Translation(val dx: Float, val dy: Float, val dz: Float) : Transform {
+
+    override fun getMatrix(m: Matrix4f): Matrix4f = m.apply { setTranslation(dx, dy, dz) }
+}
+
 
 interface VertexArray<T> : ByteSized {
     val count: Int

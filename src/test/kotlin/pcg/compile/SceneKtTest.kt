@@ -185,9 +185,9 @@ internal class SceneKtTest {
                     add(0f, 1f, 0f)
                 }
                 vertexArray3f(attribute = Normal) {
-                    add(0f, 0f, -1f)
-                    add(0f, 0f, -1f)
-                    add(0f, 0f, -1f)
+                    add(0f, 0f, 1f)
+                    add(0f, 0f, 1f)
+                    add(0f, 0f, 1f)
                 }
                 indexArray {
                     add(0, 1, 2)
@@ -197,7 +197,9 @@ internal class SceneKtTest {
         val m = Material()
         val s = scene {
             node(geometry = g, material = m)
-            node(geometry = g, material = m)
+            node(geometry = g, material = m) {
+                translate(1f, 0f, 0f)
+            }
         }
 
         val compiledGltf = compile(s)
@@ -215,7 +217,8 @@ internal class SceneKtTest {
                     mesh = 0
                 ),
                 Node(
-                    mesh = 0
+                    mesh = 0,
+                    translation = floatArrayOf(1f, 0f, 0f)
                 )
             ),
             meshes = listOf(
@@ -269,14 +272,14 @@ internal class SceneKtTest {
                     componentType = ComponentType.FLOAT,
                     count = 3,
                     type = Type.VEC3,
-                    max = listOf(0f, 0f, -1f),
-                    min = listOf(0f, 0f, -1f)
+                    max = listOf(0f, 0f, 1f),
+                    min = listOf(0f, 0f, 1f)
                 )
             ),
             buffers = listOf(
                 Buffer(
                     byteLength = 80,
-                    uri = "data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAAAAAgL8="
+                    uri = "data:application/octet-stream;base64,AAABAAIAAAAAAAAAAAAAAAAAAAAAAIA/AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8="
                 )
             )
         )

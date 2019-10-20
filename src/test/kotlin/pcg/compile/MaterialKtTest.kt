@@ -12,7 +12,7 @@ internal class MaterialKtTest {
     @Test
     internal fun shouldCompileDiffuseMaterial() {
         val material = Material(
-            diffuse = Color(0.5f, 0.7f, 0.3f, alpha = 0.9f)
+            diffuse = Color(0.5f, 0.7f, 0.3f, 0.9f)
         )
 
         val actual = material.compile()
