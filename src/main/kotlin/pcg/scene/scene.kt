@@ -106,7 +106,7 @@ class GeometryNode(
     }
 }
 
-class Material(
+data class Material(
     val name: String? = null,
     val diffuse: Color = Color(1f, 1f, 1f),
     val specular: Color = Color(0f, 0f, 0f),
@@ -114,7 +114,11 @@ class Material(
     val opacity: Color = Color(1f, 1f, 1f),
     val transparency: Color = Color(0f, 0f, 0f),
     val specularPower: Float = 1f
-)
+) {
+    companion object {
+        val default = Material()
+    }
+}
 
 class Mesh(
     val primitive: Primitive = Triangles,
@@ -305,10 +309,10 @@ val ByteSized.alignedByteSize: Int
 
 fun align(n: Int, b: Int): Int = if (n % b == 0) n else n + b - n % b
 
-val Iterable<out ByteSized>.byteSize: Int
+val Iterable<ByteSized>.byteSize: Int
     get() = this.sumBy(ByteSized::byteSize)
 
-val Iterable<out ByteSized>.alignedByteSize: Int
+val Iterable<ByteSized>.alignedByteSize: Int
     get() = this.sumBy(ByteSized::alignedByteSize)
 
 interface Builder<out T> {

@@ -14,6 +14,7 @@ import pcg.scene.Mesh.Companion.Attribute.Position
 import pcg.scene.geometry
 import pcg.scene.scene
 import java.io.File
+import pcg.gltf.Material as GltfMaterial
 
 internal class SceneKtTest {
 
@@ -349,6 +350,22 @@ internal class SceneKtTest {
                     translation = floatArrayOf(1f, 0f, 0f)
                 )
             ),
+            materials = listOf(
+                GltfMaterial(
+                    pbrMetallicRoughness = PbrMetallicRoughness(
+                        baseColorFactor = floatArrayOf(0.8f, 0f, 0f, 1f),
+                        metallicFactor = 0f,
+                        roughnessFactor = 1f
+                    )
+                ),
+                GltfMaterial(
+                    pbrMetallicRoughness = PbrMetallicRoughness(
+                        baseColorFactor = floatArrayOf(0f, 0.8f, 0f, 1f),
+                        metallicFactor = 0f,
+                        roughnessFactor = 1f
+                    )
+                )
+            ),
             meshes = listOf(
                 Mesh(
                     primitives = listOf(
@@ -356,7 +373,8 @@ internal class SceneKtTest {
                             attributes = mapOf(
                                 Attribute.POSITION to 1
                             ),
-                            indices = 0
+                            indices = 0,
+                            material = 0
                         )
                     )
                 ),
@@ -366,7 +384,8 @@ internal class SceneKtTest {
                             attributes = mapOf(
                                 Attribute.POSITION to 3
                             ),
-                            indices = 2
+                            indices = 2,
+                            material = 1
                         )
                     )
                 )

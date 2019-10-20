@@ -158,6 +158,9 @@ data class Gltf(
                 requireInRange(bufferView.buffer, buffers, "buffer")
             }
         }
+        materials?.let {
+            requireNotEmpty(it, "materials")
+        }
         meshes?.let {
             requireNotEmpty(it, "meshes")
             it.forEach { mesh ->
