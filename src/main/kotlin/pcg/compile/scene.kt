@@ -41,7 +41,7 @@ class SceneCompiler(private val scene: Scene) {
             .map { n -> n to n.geometry }
             .toMap()
     private val geometries = geometriesByNode.values.toSet()
-    private val compiledGeometries = geometries.map { it to GeometryCompiler(it) }.toMap()
+    private val compiledGeometries: Map<Geometry, GeometryCompiler> = compileGeometries(geometries)
 
     private val meshByNode: Map<Node, GltfMesh> = scene.nodes
         .mapNotNull { it as? GeometryNode }
@@ -64,4 +64,17 @@ class SceneCompiler(private val scene: Scene) {
         .toMap()
 
     private val meshIndex = indexElements(meshByNode.values)
+
+    companion object {
+
+        private fun compileGeometries(geometries: Set<Geometry>): Map<Geometry, GeometryCompiler> =
+            mutableMapOf<Geometry, GeometryCompiler>().apply {
+                var offset = Offset()
+                for (geometry in geometries) {
+                    val compiled = GeometryCompiler(geometry, offset)
+                    put(geometry, compiled)
+                    offset += compiled.offset
+                }
+            }
+    }
 }

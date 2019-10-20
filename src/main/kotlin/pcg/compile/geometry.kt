@@ -14,9 +14,13 @@ import java.nio.ByteOrder
 import java.util.*
 import pcg.gltf.Primitive.Companion.Attribute as GltfAttribute
 
-class GeometryCompiler(geometry: Geometry) {
+class GeometryCompiler(geometry: Geometry, offset: Offset) {
 
-    private val compiledMesh = MeshCompiler(geometry.meshes[0])
+    init {
+        require(geometry.meshes.size == 1) { "Only one mesh in geometry is supported so far (Constraint to be removed)" }
+    }
+
+    private val compiledMesh = MeshCompiler(geometry.meshes[0], offset)
 
     val accessors: Collection<Accessor> by lazy { compiledMesh.accessors }
 
@@ -27,9 +31,11 @@ class GeometryCompiler(geometry: Geometry) {
     val attributes: Map<GltfAttribute, Int> = compiledMesh.attributes
 
     val indices: List<Int> = compiledMesh.indices
+
+    val offset: Offset = compiledMesh.offset
 }
 
-class MeshCompiler(private val mesh: Mesh) {
+class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
 
     private val vertexAccessors: List<Accessor> by lazy { createVertexAccessors() }
 
@@ -42,15 +48,21 @@ class MeshCompiler(private val mesh: Mesh) {
     val buffer: Buffer by lazy { createBuffer() }
 
     val attributes: Map<GltfAttribute, Int> = mesh.vertexArrays.keys.mapIndexed { index, attribute ->
-        attributeMap.getValue(attribute) to index + indexAccessors.size
+        attributeMap.getValue(attribute) to baseOffset.accessor + index + indexAccessors.size
     }.toMap()
 
-    val indices: List<Int> = indexAccessors.indices.toList()
+    val indices: List<Int> = indexAccessors.indices.map { baseOffset.accessor + it }
+
+    val offset = Offset(
+        buffer = 1,
+        bufferView = if (mesh.indexArrays.isEmpty()) 1 else 2,
+        accessor = mesh.indexArrays.size + mesh.vertexArrays.size
+    )
 
     private fun createIndexAccessors(): List<Accessor> {
         return mesh.indexArrays.map { indexArray ->
             Accessor(
-                bufferView = 0,
+                bufferView = baseOffset.bufferView,
                 componentType = ComponentType.UNSIGNED_SHORT,
                 count = indexArray.count,
                 type = Type.SCALAR,
@@ -72,7 +84,7 @@ class MeshCompiler(private val mesh: Mesh) {
 
         return mesh.vertexArrays.map { (attribute, vertexArray) ->
             Accessor(
-                bufferView = if (mesh.indexArrays.isEmpty()) 0 else 1,
+                bufferView = if (mesh.indexArrays.isEmpty()) baseOffset.bufferView else baseOffset.bufferView + 1,
                 byteOffset = requireNotNull(byteOffsets[attribute]) { "Unknown attribute: $attribute" },
                 componentType = when (vertexArray) {
                     is Float3VertexArray -> ComponentType.FLOAT
@@ -101,7 +113,7 @@ class MeshCompiler(private val mesh: Mesh) {
         if (mesh.indexArrays.isNotEmpty()) {
             bufferViews.add(
                 BufferView(
-                    buffer = 0,
+                    buffer = baseOffset.buffer,
                     byteOffset = 0,
                     byteLength = mesh.indexArrays.byteSize,
                     target = Target.ELEMENT_ARRAY_BUFFER
@@ -110,7 +122,7 @@ class MeshCompiler(private val mesh: Mesh) {
         }
         bufferViews.add(
             BufferView(
-                buffer = 0,
+                buffer = baseOffset.buffer,
                 byteOffset = mesh.indexArrays.alignedByteSize,
                 byteLength = mesh.vertexArrays.values.byteSize,
                 byteStride = if (mesh.vertexArrays.size > 1) mesh.vertexArrays.values.first().byteStride else null,
@@ -167,4 +179,17 @@ class MeshCompiler(private val mesh: Mesh) {
 
         private const val BASE64_DATA_URI_PREFIX = "data:application/octet-stream;base64"
     }
+}
+
+data class Offset(
+    val buffer: Int = 0,
+    val bufferView: Int = 0,
+    val accessor: Int = 0
+) {
+    operator fun plus(other: Offset): Offset =
+        Offset(
+            buffer + other.buffer,
+            bufferView + other.bufferView,
+            accessor + other.accessor
+        )
 }
