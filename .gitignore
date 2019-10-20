@@ -1,3 +1,5 @@
+*.gltf
+
 # Created by https://www.gitignore.io/api/java,macos,gradle,kotlin,intellij+all
 # Edit at https://www.gitignore.io/?templates=java,macos,gradle,kotlin,intellij+all
 
