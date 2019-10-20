@@ -6,8 +6,6 @@ import org.joml.Vector3fc
 import pcg.scene.Float3VertexArray.Companion.Float3VertexArrayBuilder
 import pcg.scene.Geometry.Companion.GeometryBuilder
 import pcg.scene.GeometryNode.Companion.GeometryNodeBuilder
-import pcg.scene.Mesh.Companion.Attribute.Normal
-import pcg.scene.Mesh.Companion.Attribute.Position
 import pcg.scene.Mesh.Companion.MeshBuilder
 import pcg.scene.Mesh.Companion.Primitive
 import pcg.scene.Mesh.Companion.Primitive.Triangles
@@ -64,6 +62,15 @@ class ShortIndexArray(private val indices: ShortArray) : IndexArray<Short> {
 }
 
 fun geometry(block: GeometryBuilder.() -> Unit): Geometry = GeometryBuilder().apply(block).build()
+
+fun oneMeshGeometry(
+    primitive: Primitive = Triangles,
+    block: MeshBuilder.() -> Unit
+): Geometry {
+    return geometry {
+        mesh(primitive, block)
+    }
+}
 
 class Geometry(val meshes: List<Mesh>) : ByteSized {
     override val byteSize: Int = meshes.sumBy(Mesh::byteSize)
@@ -317,86 +324,4 @@ val Iterable<ByteSized>.alignedByteSize: Int
 
 interface Builder<out T> {
     fun build(): T
-}
-
-fun main() {
-    val g = geometry {
-        mesh(primitive = Triangles) {
-            vertexArray3f(attribute = Position) {
-                add(-0.5f, -0.5f, -0.5f)
-                add(-0.5f, 0.5f, -0.5f)
-                add(0.5f, 0.5f, -0.5f)
-                add(0.5f, -0.5f, -0.5f)
-                add(-0.5f, -0.5f, 0.5f)
-                add(0.5f, -0.5f, 0.5f)
-                add(0.5f, 0.5f, 0.5f)
-                add(-0.5f, 0.5f, 0.5f)
-                add(-0.5f, -0.5f, -0.5f)
-                add(0.5f, -0.5f, -0.5f)
-                add(0.5f, -0.5f, 0.5f)
-                add(-0.5f, -0.5f, 0.5f)
-                add(-0.5f, -0.5f, -0.5f)
-                add(0.5f, 0.5f, -0.5f)
-                add(0.5f, 0.5f, 0.5f)
-                add(0.5f, -0.5f, 0.5f)
-                add(0.5f, 0.5f, -0.5f)
-                add(-0.5f, 0.5f, -0.5f)
-                add(-0.5f, 0.5f, 0.5f)
-                add(0.5f, 0.5f, 0.5f)
-                add(-0.5f, 0.5f, -0.5f)
-                add(-0.5f, -0.5f, -0.5f)
-                add(-0.5f, -0.5f, 0.5f)
-                add(-0.5f, 0.5f, 0.5f)
-            }
-            vertexArray3f(attribute = Normal) {
-                add(0.0f, 0.0f, -1.0f)
-                add(0.0f, 0.0f, -1.0f)
-                add(0.0f, 0.0f, -1.0f)
-                add(0.0f, 0.0f, -1.0f)
-                add(0.0f, 0.0f, 1.0f)
-                add(0.0f, 0.0f, 1.0f)
-                add(0.0f, 0.0f, 1.0f)
-                add(0.0f, 0.0f, 1.0f)
-                add(0.0f, -1.0f, 0.0f)
-                add(0.0f, -1.0f, 0.0f)
-                add(0.0f, -1.0f, 0.0f)
-                add(0.0f, -1.0f, 0.0f)
-                add(1.0f, 0.0f, 0.0f)
-                add(1.0f, 0.0f, 0.0f)
-                add(1.0f, 0.0f, 0.0f)
-                add(1.0f, 0.0f, 0.0f)
-                add(0.0f, 1.0f, 0.0f)
-                add(0.0f, 1.0f, 0.0f)
-                add(0.0f, 1.0f, 0.0f)
-                add(0.0f, 1.0f, 0.0f)
-                add(-1.0f, 0.0f, 0.0f)
-                add(-1.0f, 0.0f, 0.0f)
-                add(-1.0f, 0.0f, 0.0f)
-                add(-1.0f, 0.0f, 0.0f)
-            }
-            indexArray {
-                add(0, 1, 2)
-                add(2, 3, 0)
-                add(4, 5, 6)
-                add(6, 7, 4)
-                add(8, 9, 10)
-                add(10, 11, 8)
-                add(12, 13, 14)
-                add(14, 15, 12)
-                add(16, 17, 18)
-                add(18, 19, 16)
-                add(20, 21, 22)
-                add(22, 23, 20)
-            }
-        }
-    }
-    val m = Material(
-        name = "Red",
-        diffuse = Color(0.8f, 0f, 0f)
-    )
-    scene {
-        node(g, m)
-    }
-
-    println(g.byteSize)
 }
