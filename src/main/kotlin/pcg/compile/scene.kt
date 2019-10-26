@@ -47,7 +47,6 @@ class SceneCompiler(private val scene: Scene) {
 
     private val materialsByNode: Map<in Node, Material>
         get() = scene.nodes.mapNotNull { n -> n as? GeometryNode }
-            .filter { n -> n.material != Material.default }
             .map { n -> n to n.material }
             .toMap()
     private val materials = materialsByNode.values.toSet()

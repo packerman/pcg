@@ -4,88 +4,85 @@ import pcg.compile.compile
 import pcg.gltf.writeToFile
 import pcg.scene.*
 import pcg.scene.Mesh.Companion.Attribute
-import pcg.scene.Mesh.Companion.Primitive
 
 val cubeGeometry =
-    geometry {
-        mesh(primitive = Primitive.Triangles) {
-            vertexArray3f(attribute = Attribute.Position) {
-                add(-0.5f, -0.5f, -0.5f)
-                add(-0.5f, 0.5f, -0.5f)
+    oneMeshGeometry {
+        vertexArray3f(attribute = Attribute.Position) {
+            add(-0.5f, -0.5f, -0.5f)
+            add(-0.5f, 0.5f, -0.5f)
 
-                add(0.5f, 0.5f, -0.5f)
-                add(0.5f, -0.5f, -0.5f)
+            add(0.5f, 0.5f, -0.5f)
+            add(0.5f, -0.5f, -0.5f)
 
-                add(-0.5f, -0.5f, 0.5f)
-                add(0.5f, -0.5f, 0.5f)
+            add(-0.5f, -0.5f, 0.5f)
+            add(0.5f, -0.5f, 0.5f)
 
-                add(0.5f, 0.5f, 0.5f)
-                add(-0.5f, 0.5f, 0.5f)
+            add(0.5f, 0.5f, 0.5f)
+            add(-0.5f, 0.5f, 0.5f)
 
-                add(-0.5f, -0.5f, -0.5f)
-                add(0.5f, -0.5f, -0.5f)
+            add(-0.5f, -0.5f, -0.5f)
+            add(0.5f, -0.5f, -0.5f)
 
-                add(0.5f, -0.5f, 0.5f)
-                add(-0.5f, -0.5f, 0.5f)
+            add(0.5f, -0.5f, 0.5f)
+            add(-0.5f, -0.5f, 0.5f)
 
-                add(0.5f, -0.5f, -0.5f)
-                add(0.5f, 0.5f, -0.5f)
+            add(0.5f, -0.5f, -0.5f)
+            add(0.5f, 0.5f, -0.5f)
 
-                add(0.5f, 0.5f, 0.5f)
-                add(0.5f, -0.5f, 0.5f)
+            add(0.5f, 0.5f, 0.5f)
+            add(0.5f, -0.5f, 0.5f)
 
-                add(0.5f, 0.5f, -0.5f)
-                add(-0.5f, 0.5f, -0.5f)
+            add(0.5f, 0.5f, -0.5f)
+            add(-0.5f, 0.5f, -0.5f)
 
-                add(-0.5f, 0.5f, 0.5f)
-                add(0.5f, 0.5f, 0.5f)
+            add(-0.5f, 0.5f, 0.5f)
+            add(0.5f, 0.5f, 0.5f)
 
-                add(-0.5f, 0.5f, -0.5f)
-                add(-0.5f, -0.5f, -0.5f)
+            add(-0.5f, 0.5f, -0.5f)
+            add(-0.5f, -0.5f, -0.5f)
 
-                add(-0.5f, -0.5f, 0.5f)
-                add(-0.5f, 0.5f, 0.5f)
-            }
-            vertexArray3f(attribute = Attribute.Normal) {
-                add(0.0f, 0.0f, -1.0f)
-                add(0.0f, 0.0f, -1.0f)
-                add(0.0f, 0.0f, -1.0f)
-                add(0.0f, 0.0f, -1.0f)
-                add(0.0f, 0.0f, 1.0f)
-                add(0.0f, 0.0f, 1.0f)
-                add(0.0f, 0.0f, 1.0f)
-                add(0.0f, 0.0f, 1.0f)
-                add(0.0f, -1.0f, 0.0f)
-                add(0.0f, -1.0f, 0.0f)
-                add(0.0f, -1.0f, 0.0f)
-                add(0.0f, -1.0f, 0.0f)
-                add(1.0f, 0.0f, 0.0f)
-                add(1.0f, 0.0f, 0.0f)
-                add(1.0f, 0.0f, 0.0f)
-                add(1.0f, 0.0f, 0.0f)
-                add(0.0f, 1.0f, 0.0f)
-                add(0.0f, 1.0f, 0.0f)
-                add(0.0f, 1.0f, 0.0f)
-                add(0.0f, 1.0f, 0.0f)
-                add(-1.0f, 0.0f, 0.0f)
-                add(-1.0f, 0.0f, 0.0f)
-                add(-1.0f, 0.0f, 0.0f)
-                add(-1.0f, 0.0f, 0.0f)
-            }
-            indexArray {
-                add(0, 1, 2)
-                add(2, 3, 0)
-                add(4, 5, 6)
-                add(6, 7, 4)
-                add(8, 9, 10)
-                add(10, 11, 8)
-                add(12, 13, 14)
-                add(14, 15, 12)
-                add(16, 17, 18)
-                add(18, 19, 16)
-                add(20, 21, 22)
-                add(22, 23, 20)
-            }
+            add(-0.5f, -0.5f, 0.5f)
+            add(-0.5f, 0.5f, 0.5f)
+        }
+        vertexArray3f(attribute = Attribute.Normal) {
+            add(0.0f, 0.0f, -1.0f)
+            add(0.0f, 0.0f, -1.0f)
+            add(0.0f, 0.0f, -1.0f)
+            add(0.0f, 0.0f, -1.0f)
+            add(0.0f, 0.0f, 1.0f)
+            add(0.0f, 0.0f, 1.0f)
+            add(0.0f, 0.0f, 1.0f)
+            add(0.0f, 0.0f, 1.0f)
+            add(0.0f, -1.0f, 0.0f)
+            add(0.0f, -1.0f, 0.0f)
+            add(0.0f, -1.0f, 0.0f)
+            add(0.0f, -1.0f, 0.0f)
+            add(1.0f, 0.0f, 0.0f)
+            add(1.0f, 0.0f, 0.0f)
+            add(1.0f, 0.0f, 0.0f)
+            add(1.0f, 0.0f, 0.0f)
+            add(0.0f, 1.0f, 0.0f)
+            add(0.0f, 1.0f, 0.0f)
+            add(0.0f, 1.0f, 0.0f)
+            add(0.0f, 1.0f, 0.0f)
+            add(-1.0f, 0.0f, 0.0f)
+            add(-1.0f, 0.0f, 0.0f)
+            add(-1.0f, 0.0f, 0.0f)
+            add(-1.0f, 0.0f, 0.0f)
+        }
+        indexArray {
+            add(0, 1, 2)
+            add(2, 3, 0)
+            add(4, 5, 6)
+            add(6, 7, 4)
+            add(8, 9, 10)
+            add(10, 11, 8)
+            add(12, 13, 14)
+            add(14, 15, 12)
+            add(16, 17, 18)
+            add(18, 19, 16)
+            add(20, 21, 22)
+            add(22, 23, 20)
         }
     }
 
@@ -126,7 +123,13 @@ fun main() {
         node(cubeGeometry, Material(diffuse = Color(0.8f, 0.8f, 0f))) {
             translate(1.5f, 0f, -1.5f)
         }
-        node(planeGeometry(6f, 6f), Material(diffuse = Color(0.5f, 0.5f, 0.5f))) {
+        node(
+            planeGeometry(6f, 6f),
+            Material(
+                diffuse = Color(0.5f, 0.5f, 0.5f),
+                twoSided = true
+            )
+        ) {
             translate(0f, -0.5f, 0f)
         }
     }

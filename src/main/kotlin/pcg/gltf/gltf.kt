@@ -6,6 +6,7 @@ import com.google.gson.JsonSerializer
 import pcg.gltf.Accessor.Companion.ComponentType
 import pcg.gltf.BufferView.Companion.Target
 import pcg.gltf.Primitive.Companion.Mode
+import pcg.util.nullIfDefault
 import pcg.validate.*
 import java.io.File
 import kotlin.reflect.KClass
@@ -189,8 +190,21 @@ data class Gltf(
  */
 data class Material(
     val name: String? = null,
-    val pbrMetallicRoughness: PbrMetallicRoughness? = null
-)
+    val pbrMetallicRoughness: PbrMetallicRoughness? = null,
+    val doubleSided: Boolean? = null
+) {
+    companion object {
+        fun withoutDefaults(
+            name: String?,
+            pbrMetallicRoughness: PbrMetallicRoughness?,
+            doubleSided: Boolean?
+        ) = Material(
+            name,
+            nullIfDefault(pbrMetallicRoughness, PbrMetallicRoughness.DEFAULT),
+            nullIfDefault(doubleSided, false)
+        )
+    }
+}
 
 /**
  * @see <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-mesh"/>
@@ -288,10 +302,20 @@ data class PbrMetallicRoughness(
     }
 
     companion object {
-        val default = PbrMetallicRoughness(
-            baseColorFactor = floatArrayOf(1f, 1f, 1f, 1f),
-            metallicFactor = 1f,
-            roughnessFactor = 1f
+        private val BASE_COLOR_FACTOR_DEFAULT = floatArrayOf(1f, 1f, 1f, 1f)
+        private const val METALLIC_FACTOR_DEFAULT = 1f
+        private const val ROUGHNESS_FACTOR_DEFAULT = 1f
+
+        val DEFAULT = PbrMetallicRoughness(null, null, null)
+
+        fun withoutDefaults(
+            baseColorFactor: FloatArray?,
+            metallicFactor: Float?,
+            roughnessFactor: Float?
+        ) = PbrMetallicRoughness(
+            nullIfDefault(baseColorFactor, BASE_COLOR_FACTOR_DEFAULT),
+            nullIfDefault(metallicFactor, METALLIC_FACTOR_DEFAULT),
+            nullIfDefault(roughnessFactor, ROUGHNESS_FACTOR_DEFAULT)
         )
     }
 }
