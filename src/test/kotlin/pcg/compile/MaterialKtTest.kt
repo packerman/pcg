@@ -47,4 +47,21 @@ internal class MaterialKtTest {
         assertEquals(expected, actual)
     }
 
+    @Test
+    internal fun shouldKeepMaterialName() {
+        val material = Material(
+            name = "TestName"
+        )
+
+        val actual = material.compile()
+
+        val expected = GltfMaterial(
+            name = "TestName",
+            pbrMetallicRoughness = PbrMetallicRoughness(
+                metallicFactor = 0f
+            )
+        )
+
+        assertEquals(expected, actual)
+    }
 }

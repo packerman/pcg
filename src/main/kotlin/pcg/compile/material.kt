@@ -13,7 +13,7 @@ import pcg.gltf.Material as GltfMaterial
 
 fun Material.compile(): GltfMaterial =
     GltfMaterial.withoutDefaults(
-        name = null,
+        name = name,
         pbrMetallicRoughness = PbrMetallicRoughness.withoutDefaults(
             baseColorFactor = floatArrayOf(diffuse.red, diffuse.green, diffuse.blue, diffuse.alpha),
             roughnessFactor = 1f,
