@@ -120,7 +120,8 @@ data class Material(
     val emission: Color = Color(0f, 0f, 0f),
     val opacity: Color = Color(1f, 1f, 1f),
     val transparency: Color = Color(0f, 0f, 0f),
-    val specularPower: Float = 1f
+    val specularPower: Float = 1f,
+    val twoSided: Boolean = false
 ) {
     companion object {
         val default = Material()

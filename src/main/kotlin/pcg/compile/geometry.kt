@@ -9,6 +9,7 @@ import pcg.gltf.BufferView.Companion.Target
 import pcg.scene.*
 import pcg.scene.Mesh.Companion.Attribute
 import pcg.util.allTheSame
+import pcg.util.fillBytes
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
@@ -140,10 +141,7 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
             .order(ByteOrder.LITTLE_ENDIAN)
         mesh.indexArrays.forEach { indexArray ->
             indexArray.copyToByteBuffer(byteBuffer)
-            val remaining = indexArray.alignedByteSize - indexArray.byteSize
-            (1..remaining).forEach { _ ->
-                byteBuffer.put(0)
-            }
+            byteBuffer.fillBytes(indexArray.alignedByteSize - indexArray.byteSize)
         }
         mesh.vertexArrays.values.forEach { it.copyToByteBuffer(byteBuffer) }
 

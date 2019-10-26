@@ -55,9 +55,15 @@ internal class SceneKtTest {
                         Primitive(
                             attributes = mapOf(
                                 Attribute.POSITION to 0
-                            )
+                            ),
+                            material = 0
                         )
                     )
+                )
+            ),
+            materials = listOf(
+                GltfMaterial(
+                    pbrMetallicRoughness = PbrMetallicRoughness(metallicFactor = 0f)
                 )
             ),
             bufferViews = listOf(
@@ -129,9 +135,15 @@ internal class SceneKtTest {
                             attributes = mapOf(
                                 Attribute.POSITION to 1
                             ),
-                            indices = 0
+                            indices = 0,
+                            material = 0
                         )
                     )
+                )
+            ),
+            materials = listOf(
+                GltfMaterial(
+                    pbrMetallicRoughness = PbrMetallicRoughness(metallicFactor = 0f)
                 )
             ),
             bufferViews = listOf(
@@ -231,9 +243,15 @@ internal class SceneKtTest {
                                 Attribute.POSITION to 1,
                                 Attribute.NORMAL to 2
                             ),
-                            indices = 0
+                            indices = 0,
+                            material = 0
                         )
                     )
+                )
+            ),
+            materials = listOf(
+                GltfMaterial(
+                    pbrMetallicRoughness = PbrMetallicRoughness(metallicFactor = 0f)
                 )
             ),
             bufferViews = listOf(
@@ -354,15 +372,13 @@ internal class SceneKtTest {
                 GltfMaterial(
                     pbrMetallicRoughness = PbrMetallicRoughness(
                         baseColorFactor = floatArrayOf(0.8f, 0f, 0f, 1f),
-                        metallicFactor = 0f,
-                        roughnessFactor = 1f
+                        metallicFactor = 0f
                     )
                 ),
                 GltfMaterial(
                     pbrMetallicRoughness = PbrMetallicRoughness(
                         baseColorFactor = floatArrayOf(0f, 0.8f, 0f, 1f),
-                        metallicFactor = 0f,
-                        roughnessFactor = 1f
+                        metallicFactor = 0f
                     )
                 )
             ),

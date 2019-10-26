@@ -20,7 +20,7 @@ fun requireSize(array: FloatArray, n: Int, name: String) =
 fun requireSize(list: List<*>, n: Int, name: String) =
     require(list.size == n) { "'$name' has to have size $n" }
 
-fun hasElementsOf(list: List<out Number>, kClass: KClass<out Number>, name: String) {
+fun hasElementsOf(list: List<Number>, kClass: KClass<out Number>, name: String) {
     list.forEach { element ->
         require(kClass.isInstance(element)) {
             "List $name has some element of type ${element::class} while all elements have to be of $kClass type"

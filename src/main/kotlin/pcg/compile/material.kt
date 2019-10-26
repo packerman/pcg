@@ -2,6 +2,7 @@ package pcg.compile
 
 import pcg.gltf.PbrMetallicRoughness
 import pcg.scene.Material
+import pcg.util.nullIfDefault
 import pcg.gltf.Material as GltfMaterial
 
 /**
@@ -11,10 +12,12 @@ import pcg.gltf.Material as GltfMaterial
  */
 
 fun Material.compile(): GltfMaterial =
-    GltfMaterial(
-        pbrMetallicRoughness = PbrMetallicRoughness(
+    GltfMaterial.withoutDefaults(
+        name = null,
+        pbrMetallicRoughness = PbrMetallicRoughness.withoutDefaults(
             baseColorFactor = floatArrayOf(diffuse.red, diffuse.green, diffuse.blue, diffuse.alpha),
             roughnessFactor = 1f,
             metallicFactor = 0f
-        )
+        ),
+        doubleSided = nullIfDefault(twoSided, false)
     )
