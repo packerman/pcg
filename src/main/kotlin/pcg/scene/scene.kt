@@ -108,6 +108,13 @@ class GeometryNode(
     transforms: List<Transform>
 ) : Node(transforms) {
 
+    init {
+        for (mesh in geometry.meshes) {
+            require((mesh.indexArrays.isEmpty() && materials.size == 1 && 0 in materials) ||
+                    mesh.indexArrays.all { it.material in materials })
+        }
+    }
+
     companion object {
 
         class GeometryNodeBuilder(private val geometry: Geometry) : NodeBuilder() {
