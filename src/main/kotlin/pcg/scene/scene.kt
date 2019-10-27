@@ -222,15 +222,21 @@ fun scene(block: SceneBuilder.() -> Unit): Scene = SceneBuilder().apply(block).b
 
 class Scene(val nodes: List<Node>) {
 
+    val geometries: Set<Geometry>
+        get() = nodes.mapNotNull { n -> n as? GeometryNode }
+            .map { it.geometry }
+            .toSet()
+
+    val materials: Set<Material>
+        get() = nodes.mapNotNull { it as? GeometryNode }
+            .flatMap { it.materials.values }
+            .toSet()
+
     companion object {
 
         class SceneBuilder : Builder<Scene> {
 
             private val nodes = mutableListOf<Node>()
-
-            fun node(node: Node) {
-                nodes.add(node)
-            }
 
             fun node(geometry: Geometry, block: GeometryNodeBuilder.() -> Unit = {}) {
                 nodes.add(GeometryNodeBuilder(geometry).apply(block).build())

@@ -158,11 +158,22 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
     }
 
     companion object {
+
         val attributeMap = mapOf(
             Attribute.Position to GltfAttribute.POSITION,
             Attribute.Normal to GltfAttribute.NORMAL,
             Attribute.TexCoord to GltfAttribute.TEXCOORD_0
         )
+
+        fun compileGeometries(geometries: Set<Geometry>): Map<Geometry, GeometryCompiler> =
+            mutableMapOf<Geometry, GeometryCompiler>().apply {
+                var offset = Offset()
+                for (geometry in geometries) {
+                    val compiled = GeometryCompiler(geometry, offset)
+                    put(geometry, compiled)
+                    offset += compiled.offset
+                }
+            }
 
         private fun getVertexByteOffsets(vertexArrays: Map<Attribute, VertexArray<*>>): Map<Attribute, Int> =
             mutableMapOf<Attribute, Int>().apply {

@@ -1,5 +1,6 @@
 package pcg.compile
 
+import pcg.compile.MeshCompiler.Companion.compileGeometries
 import pcg.gltf.Gltf
 import pcg.gltf.Primitive
 import pcg.scene.*
@@ -38,18 +39,9 @@ class SceneCompiler(private val scene: Scene) {
         buffers = compiledGeometries.values.map(GeometryCompiler::buffer)
     )
 
-    private val geometriesByNode: Map<in Node, Geometry>
-        get() = scene.nodes.mapNotNull { n -> n as? GeometryNode }
-            .map { n -> n to n.geometry }
-            .toMap()
-    private val geometries = geometriesByNode.values.toSet()
-    private val compiledGeometries: Map<Geometry, GeometryCompiler> = compileGeometries(geometries)
+    private val compiledGeometries: Map<Geometry, GeometryCompiler> = compileGeometries(scene.geometries)
 
-    private val materials: Set<Material>
-        get() = scene.nodes.mapNotNull { it as? GeometryNode }
-            .flatMap { it.materials.values }
-            .toSet()
-    private val compiledMaterials: Map<Material, GltfMaterial> = materials.map { it to it.compile() }.toMap()
+    private val compiledMaterials: Map<Material, GltfMaterial> = scene.materials.map { it to it.compile() }.toMap()
     private val materialIndex: Map<GltfMaterial, Int> = indexElements(compiledMaterials.values)
 
     private val meshByNode: Map<Node, GltfMesh> = scene.nodes
@@ -78,17 +70,4 @@ class SceneCompiler(private val scene: Scene) {
         node.materials[index]?.let { compiledMaterials[it] }?.let { materialIndex.getValue(it) }
 
     private val meshIndex: Map<GltfMesh, Int> = indexElements(meshByNode.values)
-
-    companion object {
-
-        private fun compileGeometries(geometries: Set<Geometry>): Map<Geometry, GeometryCompiler> =
-            mutableMapOf<Geometry, GeometryCompiler>().apply {
-                var offset = Offset()
-                for (geometry in geometries) {
-                    val compiled = GeometryCompiler(geometry, offset)
-                    put(geometry, compiled)
-                    offset += compiled.offset
-                }
-            }
-    }
 }
