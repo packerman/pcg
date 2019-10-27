@@ -111,25 +111,31 @@ fun planeGeometry(a: Float, b: Float): Geometry {
 
 fun main() {
     val s = scene {
-        node(cubeGeometry, Material(diffuse = Color(0.8f, 0f, 0f))) {
+        node(cubeGeometry) {
+            material(Material(diffuse = Color(0.8f, 0f, 0f)))
             translate(-1.5f, 0f, 1.5f)
         }
-        node(cubeGeometry, Material(diffuse = Color(0f, 0.8f, 0f))) {
+        node(cubeGeometry) {
+            material(Material(diffuse = Color(0f, 0.8f, 0f)))
             translate(1.5f, 0f, 1.5f)
         }
-        node(cubeGeometry, Material(diffuse = Color(0f, 0f, 0.8f))) {
+        node(cubeGeometry) {
+            material(Material(diffuse = Color(0f, 0f, 0.8f)))
             translate(-1.5f, 0f, -1.5f)
         }
-        node(cubeGeometry, Material(diffuse = Color(0.8f, 0.8f, 0f))) {
+        node(cubeGeometry) {
+            material(Material(diffuse = Color(0.8f, 0.8f, 0f)))
             translate(1.5f, 0f, -1.5f)
         }
         node(
-            planeGeometry(6f, 6f),
-            Material(
-                diffuse = Color(0.5f, 0.5f, 0.5f),
-                twoSided = true
-            )
+            planeGeometry(6f, 6f)
         ) {
+            material(
+                Material(
+                    diffuse = Color(0.5f, 0.5f, 0.5f),
+                    twoSided = true
+                )
+            )
             translate(0f, -0.5f, 0f)
         }
     }

@@ -12,6 +12,7 @@ import pcg.scene.Mesh.Companion.Primitive.Triangles
 import pcg.scene.Node.Companion.NodeBuilder
 import pcg.scene.Scene.Companion.SceneBuilder
 import pcg.scene.ShortIndexArray.Companion.ShortIndexArrayBuilder
+import pcg.util.align
 import pcg.util.allTheSame
 import pcg.util.intIterator
 import pcg.validate.requireNotEmpty
@@ -20,6 +21,9 @@ import java.nio.ByteBuffer
 data class Color(val red: Float, val green: Float, val blue: Float, val alpha: Float = 1f)
 
 interface IndexArray<T> : ByteSized, Iterable<Int> {
+    val material: Int
+        get() = 0
+
     val count: Int
 
     val max: T
@@ -28,7 +32,7 @@ interface IndexArray<T> : ByteSized, Iterable<Int> {
     fun copyToByteBuffer(byteBuffer: ByteBuffer)
 }
 
-class ShortIndexArray(private val indices: ShortArray) : IndexArray<Short> {
+class ShortIndexArray(override val material: Int = 0, private val indices: ShortArray) : IndexArray<Short> {
 
     override val byteSize: Int = 2 * indices.size
 
@@ -47,7 +51,7 @@ class ShortIndexArray(private val indices: ShortArray) : IndexArray<Short> {
     override fun iterator(): IntIterator = indices.intIterator()
 
     companion object {
-        class ShortIndexArrayBuilder : Builder<ShortIndexArray> {
+        class ShortIndexArrayBuilder(private val material: Int = 0) : Builder<ShortIndexArray> {
             private val indices = mutableListOf<Short>()
 
             fun add(i: Short, j: Short, k: Short) {
@@ -56,7 +60,7 @@ class ShortIndexArray(private val indices: ShortArray) : IndexArray<Short> {
                 indices.add(k)
             }
 
-            override fun build(): ShortIndexArray = ShortIndexArray(indices.toShortArray())
+            override fun build(): ShortIndexArray = ShortIndexArray(material, indices.toShortArray())
         }
     }
 }
@@ -100,15 +104,32 @@ class Geometry(val meshes: List<Mesh>) : ByteSized {
 
 class GeometryNode(
     val geometry: Geometry,
-    val material: Material,
+    val materials: Map<Int, Material>,
     transforms: List<Transform>
 ) : Node(transforms) {
 
+    init {
+        for (mesh in geometry.meshes) {
+            require((mesh.indexArrays.isEmpty() && materials.size == 1 && 0 in materials) ||
+                    (mesh.indexArrays.all { it.material in materials } && materials.keys.all { it in mesh.indexArrays.indices })
+            )
+        }
+    }
+
     companion object {
 
-        class GeometryNodeBuilder(private val geometry: Geometry, private val material: Material) : NodeBuilder() {
+        class GeometryNodeBuilder(private val geometry: Geometry) : NodeBuilder() {
 
-            override fun build(): Node = GeometryNode(geometry, material, transforms)
+            private val materials = mutableMapOf<Int, Material>()
+
+            fun material(index: Int = 0, material: Material) {
+                require(index !in materials) { "Node already has some material for index $index" }
+                materials[index] = material
+            }
+
+            fun material(material: Material) = material(0, material)
+
+            override fun build(): Node = GeometryNode(geometry, materials, transforms)
         }
     }
 }
@@ -157,7 +178,7 @@ class Mesh(
             TexCoord
         }
 
-        class MeshBuilder(val primitive: Primitive) : Builder<Mesh> {
+        class MeshBuilder(private val primitive: Primitive) : Builder<Mesh> {
 
             private val vertexArrays = mutableMapOf<Attribute, VertexArray<*>>()
             private val indexArrays = mutableListOf<IndexArray<*>>()
@@ -169,8 +190,8 @@ class Mesh(
                 vertexArrays[attribute] = Float3VertexArrayBuilder().apply(block).build()
             }
 
-            fun indexArray(block: ShortIndexArrayBuilder.() -> Unit) {
-                indexArrays.add(ShortIndexArrayBuilder().apply(block).build())
+            fun indexArray(material: Int = 0, block: ShortIndexArrayBuilder.() -> Unit) {
+                indexArrays.add(ShortIndexArrayBuilder(material).apply(block).build())
             }
 
             override fun build(): Mesh {
@@ -211,8 +232,8 @@ class Scene(val nodes: List<Node>) {
                 nodes.add(node)
             }
 
-            fun node(geometry: Geometry, material: Material, block: GeometryNodeBuilder.() -> Unit = {}) {
-                nodes.add(GeometryNodeBuilder(geometry, material).apply(block).build())
+            fun node(geometry: Geometry, block: GeometryNodeBuilder.() -> Unit = {}) {
+                nodes.add(GeometryNodeBuilder(geometry).apply(block).build())
             }
 
             override fun build(): Scene = Scene(nodes)
@@ -315,13 +336,8 @@ interface ByteSized {
 val ByteSized.alignedByteSize: Int
     get() = align(byteSize, 4)
 
-fun align(n: Int, b: Int): Int = if (n % b == 0) n else n + b - n % b
-
 val Iterable<ByteSized>.byteSize: Int
     get() = this.sumBy(ByteSized::byteSize)
-
-val Iterable<ByteSized>.alignedByteSize: Int
-    get() = this.sumBy(ByteSized::alignedByteSize)
 
 interface Builder<out T> {
     fun build(): T

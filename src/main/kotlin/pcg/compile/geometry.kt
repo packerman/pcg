@@ -8,8 +8,10 @@ import pcg.gltf.BufferView
 import pcg.gltf.BufferView.Companion.Target
 import pcg.scene.*
 import pcg.scene.Mesh.Companion.Attribute
+import pcg.util.align
 import pcg.util.allTheSame
 import pcg.util.fillBytes
+import pcg.util.remaining
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
@@ -31,7 +33,7 @@ class GeometryCompiler(geometry: Geometry, offset: Offset) {
 
     val attributes: Map<GltfAttribute, Int> = compiledMesh.attributes
 
-    val indices: List<Int> = compiledMesh.indices
+    val indices: Map<Int, Int> = compiledMesh.indices
 
     val offset: Offset = compiledMesh.offset
 }
@@ -52,7 +54,9 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
         attributeMap.getValue(attribute) to baseOffset.accessor + index + indexAccessors.size
     }.toMap()
 
-    val indices: List<Int> = indexAccessors.indices.map { baseOffset.accessor + it }
+    val indices: Map<Int, Int> = mesh.indexArrays.mapIndexed { index, indexArray ->
+        baseOffset.accessor + index to indexArray.material
+    }.toMap()
 
     val offset = Offset(
         buffer = 1,
@@ -61,9 +65,11 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
     )
 
     private fun createIndexAccessors(): List<Accessor> {
-        return mesh.indexArrays.map { indexArray ->
+        val offsets = getIndexByteOffsets(mesh.indexArrays)
+        return mesh.indexArrays.mapIndexed { index, indexArray ->
             Accessor(
                 bufferView = baseOffset.bufferView,
+                byteOffset = offsets[index],
                 componentType = ComponentType.UNSIGNED_SHORT,
                 count = indexArray.count,
                 type = Type.SCALAR,
@@ -124,7 +130,7 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
         bufferViews.add(
             BufferView(
                 buffer = baseOffset.buffer,
-                byteOffset = mesh.indexArrays.alignedByteSize,
+                byteOffset = align(mesh.indexArrays.byteSize, 4),
                 byteLength = mesh.vertexArrays.values.byteSize,
                 byteStride = if (mesh.vertexArrays.size > 1) mesh.vertexArrays.values.first().byteStride else null,
                 target = Target.ARRAY_BUFFER
@@ -141,8 +147,8 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
             .order(ByteOrder.LITTLE_ENDIAN)
         mesh.indexArrays.forEach { indexArray ->
             indexArray.copyToByteBuffer(byteBuffer)
-            byteBuffer.fillBytes(indexArray.alignedByteSize - indexArray.byteSize)
         }
+        byteBuffer.fillBytes(remaining(mesh.indexArrays.byteSize, 4))
         mesh.vertexArrays.values.forEach { it.copyToByteBuffer(byteBuffer) }
 
         return Buffer(
@@ -164,6 +170,15 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
                 for ((attribute, vertexArray) in vertexArrays) {
                     this[attribute] = offset
                     offset += vertexArray.byteSize
+                }
+            }
+
+        private fun getIndexByteOffsets(indexArrays: List<IndexArray<*>>): Map<Int, Int> =
+            mutableMapOf<Int, Int>().apply {
+                var offset = 0
+                indexArrays.forEachIndexed { index, indexArray ->
+                    this[index] = offset
+                    offset += indexArray.byteSize
                 }
             }
 
