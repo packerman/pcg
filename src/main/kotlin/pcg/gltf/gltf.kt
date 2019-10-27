@@ -7,6 +7,8 @@ import pcg.common.ComponentType
 import pcg.common.Type
 import pcg.gltf.BufferView.Companion.Target
 import pcg.gltf.Primitive.Companion.Mode
+import pcg.gltf.Sampler.Companion.Filter
+import pcg.gltf.Sampler.Companion.Wrap
 import pcg.util.nullIfDefault
 import pcg.validate.*
 import java.io.File
@@ -97,10 +99,13 @@ data class Gltf(
     val buffers: List<Buffer>? = null,
     val bufferViews: List<BufferView>? = null,
     val materials: List<Material>? = null,
+    val images: List<Image>? = null,
     val meshes: List<Mesh>? = null,
     val nodes: List<Node>? = null,
+    val samplers: List<Sampler>? = null,
     val scene: Int? = null,
-    val scenes: List<Scene>? = null
+    val scenes: List<Scene>? = null,
+    val textures: List<Texture>? = null
 ) {
 
     init {
@@ -134,6 +139,9 @@ data class Gltf(
                 requireInRange(bufferView.buffer, buffers, "buffer")
             }
         }
+        images?.let {
+            requireNotEmpty(it, "images")
+        }
         materials?.let {
             requireNotEmpty(it, "materials")
         }
@@ -156,10 +164,27 @@ data class Gltf(
                 node.mesh?.let { mesh -> requireInRange(mesh, meshes, "mesh") }
             }
         }
+        samplers?.let {
+            requireNotEmpty(it, "samplers")
+        }
         scenes?.let { requireNotEmpty(it, "scenes") }
         scene?.let { requireInRange(it, scenes, "scene") }
+        textures?.let {
+            requireNotEmpty(it, "textures")
+            it.forEach { texture ->
+                texture.sampler?.let { sampler -> requireInRange(sampler, samplers, "sampler") }
+                texture.source?.let { source -> requireInRange(source, images, "source") }
+            }
+        }
     }
 }
+
+/**
+ * @see <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-image"/>
+ */
+data class Image(
+    val uri: String? = null
+)
 
 /**
  * @see <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-material"/>
@@ -334,6 +359,48 @@ data class Primitive(
     }
 }
 
+/**
+ * See <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-sampler"/>
+ */
+data class Sampler(
+    val magFilter: Filter? = null,
+    val minFilter: Filter? = null,
+    val wrapS: Wrap? = Wrap.Repeat,
+    val wrapT: Wrap? = Wrap.Repeat
+) {
+    init {
+        magFilter?.let { it in setOf(Filter.Nearest, Filter.Linear) }
+    }
+
+    companion object {
+
+        val default = Sampler()
+
+        enum class Filter(val filter: Int) {
+            Nearest(9728),
+            Linear(9729),
+            NearestMipmapNearest(9984),
+            LinearMipmapNearest(9985),
+            NearestMipmapLinear(9986),
+            LinearMipmapLinear(9987);
+
+            companion object {
+                val serializer = JsonSerializer<Filter> { src, _, _ -> JsonPrimitive(src.filter) }
+            }
+        }
+
+        enum class Wrap(val mode: Int) {
+            ClampToEdge(33071),
+            MirroredRepeat(33648),
+            Repeat(10497);
+
+            companion object {
+                val serializer = JsonSerializer<Wrap> { src, _, _ -> JsonPrimitive(src.mode) }
+            }
+        }
+    }
+}
+
 data class Scene(
     val nodes: List<Int>? = null,
     val name: String? = null
@@ -344,6 +411,14 @@ data class Scene(
     }
 }
 
+/**
+ * See <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-texture"/>
+ */
+data class Texture(
+    val sampler: Int? = null,
+    val source: Int? = null
+)
+
 fun Gltf.toJson(prettyPrinting: Boolean = false): String {
     val builder = GsonBuilder()
     builder.disableHtmlEscaping()
@@ -353,6 +428,8 @@ fun Gltf.toJson(prettyPrinting: Boolean = false): String {
     builder.registerTypeAdapter(Mode::class.java, Mode.serializer)
     builder.registerTypeAdapter(ComponentType::class.java, ComponentType.serializer)
     builder.registerTypeAdapter(Target::class.java, Target.serializer)
+    builder.registerTypeAdapter(Filter::class.java, Filter.serializer)
+    builder.registerTypeAdapter(Wrap::class.java, Wrap.serializer)
     val gson = builder.create()
     return gson.toJson(this)
 }
