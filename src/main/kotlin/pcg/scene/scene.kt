@@ -1,6 +1,10 @@
 package pcg.scene
 
 import org.joml.*
+import pcg.common.AccessorData
+import pcg.common.ComponentType
+import pcg.common.Type
+import pcg.common.WithAccessorData
 import pcg.scene.Float2VertexArray.Companion.Float2VertexArrayBuilder
 import pcg.scene.Float3VertexArray.Companion.Float3VertexArrayBuilder
 import pcg.scene.Geometry.Companion.GeometryBuilder
@@ -19,7 +23,7 @@ import java.nio.ByteBuffer
 
 data class Color(val red: Float, val green: Float, val blue: Float, val alpha: Float = 1f)
 
-interface IndexArray<T> : ByteSized, Iterable<Int> {
+interface IndexArray<T> : ByteSized, Iterable<Int>, WithAccessorData {
     val material: Int
         get() = 0
 
@@ -48,6 +52,14 @@ class ShortIndexArray(override val material: Int = 0, private val indices: Short
     }
 
     override fun iterator(): IntIterator = indices.intIterator()
+
+    override val accessorData: AccessorData
+        get() = AccessorData(
+            componentType = ComponentType.UNSIGNED_SHORT,
+            type = Type.SCALAR,
+            max = listOf(max),
+            min = listOf(min)
+        )
 
     companion object {
         class ShortIndexArrayBuilder(private val material: Int = 0) : Builder<ShortIndexArray> {
@@ -196,7 +208,6 @@ class Mesh(
                 vertexArrays[attribute] = Float2VertexArrayBuilder().apply(block).build()
             }
 
-
             fun indexArray(material: Int = 0, block: ShortIndexArrayBuilder.() -> Unit) {
                 indexArrays.add(ShortIndexArrayBuilder(material).apply(block).build())
             }
@@ -265,7 +276,7 @@ class Translation(val dx: Float, val dy: Float, val dz: Float) : Transform {
 }
 
 
-interface VertexArray<T> : ByteSized {
+interface VertexArray<T> : ByteSized, WithAccessorData {
     val count: Int
 
     val max: T
@@ -295,6 +306,14 @@ class Float3VertexArray(private val vertices: Array<Vector3fc>) : VertexArray<Ve
             putFloat(vertex.z())
         }
     }
+
+    override val accessorData: AccessorData
+        get() = AccessorData(
+            componentType = ComponentType.FLOAT,
+            type = Type.VEC3,
+            max = listOf(max.x(), max.y(), max.z()),
+            min = listOf(min.x(), min.y(), min.z())
+        )
 
     companion object {
 
@@ -360,6 +379,14 @@ class Float2VertexArray(private val vertices: Array<Vector2fc>) : VertexArray<Ve
             putFloat(vertex.y())
         }
     }
+
+    override val accessorData: AccessorData
+        get() = AccessorData(
+            componentType = ComponentType.FLOAT,
+            type = Type.VEC2,
+            max = listOf(max.x(), max.y()),
+            min = listOf(min.x(), min.y())
+        )
 
     companion object {
 

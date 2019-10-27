@@ -3,8 +3,8 @@ package pcg.gltf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
-import pcg.gltf.Accessor.Companion.ComponentType
-import pcg.gltf.Accessor.Companion.Type
+import pcg.common.ComponentType
+import pcg.common.Type
 import pcg.gltf.BufferView.Companion.Target
 
 internal class GltfTest {

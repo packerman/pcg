@@ -2,9 +2,9 @@ package pcg.compile
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import pcg.common.ComponentType
+import pcg.common.Type
 import pcg.gltf.*
-import pcg.gltf.Accessor.Companion.ComponentType
-import pcg.gltf.Accessor.Companion.Type
 import pcg.gltf.BufferView.Companion.Target
 import pcg.gltf.Primitive.Companion.Attribute
 import pcg.scene.Color

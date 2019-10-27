@@ -1,8 +1,6 @@
 package pcg.compile
 
 import pcg.gltf.Accessor
-import pcg.gltf.Accessor.Companion.ComponentType
-import pcg.gltf.Accessor.Companion.Type
 import pcg.gltf.Buffer
 import pcg.gltf.BufferView
 import pcg.gltf.BufferView.Companion.Target
@@ -54,8 +52,10 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
     val buffer: Buffer by lazy { createBuffer() }
 
     val attributes: Map<GltfAttribute, Int> = mesh.vertexArrays.map { (attribute, vertexArray) ->
-        attributeMap.getValue(attribute) to baseOffset.accessor +
-                vertexArraysByByteStrideOrder.indexOf(vertexArray) + indexAccessors.size
+        attributeMap.getValue(attribute) to
+                baseOffset.accessor +
+                indexAccessors.size +
+                vertexArraysByByteStrideOrder.indexOf(vertexArray)
     }.toMap()
 
     val indices: Map<Int, Int> = mesh.indexArrays.mapIndexed { index, indexArray ->
@@ -71,20 +71,15 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
     private fun createIndexAccessors(): List<Accessor> {
         val offsets = getIndexByteOffsets(mesh.indexArrays)
         return mesh.indexArrays.mapIndexed { index, indexArray ->
+            val accessorData = indexArray.accessorData
             Accessor(
                 bufferView = baseOffset.bufferView,
                 byteOffset = offsets[index],
-                componentType = ComponentType.UNSIGNED_SHORT,
+                componentType = accessorData.componentType,
                 count = indexArray.count,
-                type = Type.SCALAR,
-                max = when (indexArray) {
-                    is ShortIndexArray -> listOf(indexArray.max)
-                    else -> unknownIndexArrayTypeError(indexArray)
-                },
-                min = when (indexArray) {
-                    is ShortIndexArray -> listOf(indexArray.min)
-                    else -> unknownIndexArrayTypeError(indexArray)
-                }
+                type = accessorData.type,
+                max = accessorData.max,
+                min = accessorData.min
             )
         }
     }
@@ -94,30 +89,15 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
         return vertexArraysByByteStride.flatMap { (_, vertexArrays) ->
             var byteOffset = 0
             vertexArrays.map { vertexArray ->
+                val accessorData = vertexArray.accessorData
                 Accessor(
                     bufferView = strideIndex.getValue(vertexArray.byteStride) + baseOffset.bufferView + if (mesh.indexArrays.isEmpty()) 0 else 1,
                     byteOffset = byteOffset,
-                    componentType = when (vertexArray) {
-                        is Float3VertexArray -> ComponentType.FLOAT
-                        is Float2VertexArray -> ComponentType.FLOAT
-                        else -> unknownVertexArrayTypeError(vertexArray)
-                    },
+                    componentType = accessorData.componentType,
                     count = vertexArray.count,
-                    type = when (vertexArray) {
-                        is Float3VertexArray -> Type.VEC3
-                        is Float2VertexArray -> Type.VEC2
-                        else -> unknownVertexArrayTypeError(vertexArray)
-                    },
-                    max = when (vertexArray) {
-                        is Float3VertexArray -> listOf(vertexArray.max.x(), vertexArray.max.y(), vertexArray.max.z())
-                        is Float2VertexArray -> listOf(vertexArray.max.x(), vertexArray.max.y())
-                        else -> unknownVertexArrayTypeError(vertexArray)
-                    },
-                    min = when (vertexArray) {
-                        is Float3VertexArray -> listOf(vertexArray.min.x(), vertexArray.min.y(), vertexArray.min.z())
-                        is Float2VertexArray -> listOf(vertexArray.min.x(), vertexArray.min.y())
-                        else -> unknownVertexArrayTypeError(vertexArray)
-                    }
+                    type = accessorData.type,
+                    max = accessorData.max,
+                    min = accessorData.min
                 ).also {
                     byteOffset += vertexArray.byteSize
                 }
@@ -199,12 +179,6 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
                     offset += indexArray.byteSize
                 }
             }
-
-        private fun unknownVertexArrayTypeError(vertexArray: VertexArray<*>): Nothing =
-            error("Unknown Vertex Array type: ${vertexArray::class}")
-
-        private fun unknownIndexArrayTypeError(indexArray: IndexArray<*>): Nothing =
-            error("Unknown Vertex Array type: ${indexArray::class}")
 
         private fun getBase64Encoder() = Base64.getEncoder()
 
