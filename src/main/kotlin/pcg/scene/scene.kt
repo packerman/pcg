@@ -1,8 +1,7 @@
 package pcg.scene
 
-import org.joml.Matrix4f
-import org.joml.Vector3f
-import org.joml.Vector3fc
+import org.joml.*
+import pcg.scene.Float2VertexArray.Companion.Float2VertexArrayBuilder
 import pcg.scene.Float3VertexArray.Companion.Float3VertexArrayBuilder
 import pcg.scene.Geometry.Companion.GeometryBuilder
 import pcg.scene.GeometryNode.Companion.GeometryNodeBuilder
@@ -190,6 +189,14 @@ class Mesh(
                 vertexArrays[attribute] = Float3VertexArrayBuilder().apply(block).build()
             }
 
+            fun vertexArray2f(
+                attribute: Attribute,
+                block: Float2VertexArrayBuilder.() -> Unit
+            ) {
+                vertexArrays[attribute] = Float2VertexArrayBuilder().apply(block).build()
+            }
+
+
             fun indexArray(material: Int = 0, block: ShortIndexArrayBuilder.() -> Unit) {
                 indexArrays.add(ShortIndexArrayBuilder(material).apply(block).build())
             }
@@ -328,6 +335,65 @@ class Float3VertexArray(private val vertices: Array<Vector3fc>) : VertexArray<Ve
                 }
                 if (elem.z() < result.z) {
                     result.z = elem.z()
+                }
+            }
+            return result
+        }
+    }
+}
+
+class Float2VertexArray(private val vertices: Array<Vector2fc>) : VertexArray<Vector2fc> {
+
+    override val byteSize: Int = 2 * 4 * vertices.size
+
+    override val count: Int = vertices.size
+
+    override val max: Vector2fc by lazy { maxVector(vertices) }
+
+    override val min: Vector2fc by lazy { minVector(vertices) }
+
+    override val byteStride: Int = 8
+
+    override fun copyToByteBuffer(byteBuffer: ByteBuffer) = with(byteBuffer) {
+        for (vertex in vertices) {
+            putFloat(vertex.x())
+            putFloat(vertex.y())
+        }
+    }
+
+    companion object {
+
+        class Float2VertexArrayBuilder : Builder<Float2VertexArray> {
+            private val vertices = mutableListOf<Vector2fc>()
+
+            fun add(x: Float, y: Float) {
+                vertices.add(Vector2f(x, y))
+            }
+
+            override fun build(): Float2VertexArray = Float2VertexArray(vertices.toTypedArray())
+        }
+
+        private fun maxVector(array: Array<Vector2fc>): Vector2fc {
+            val result = Vector2f(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY)
+            for (elem in array) {
+                if (elem.x() > result.x) {
+                    result.x = elem.x()
+                }
+                if (elem.y() > result.y) {
+                    result.y = elem.y()
+                }
+            }
+            return result
+        }
+
+        private fun minVector(array: Array<Vector2fc>): Vector2fc {
+            val result = Vector2f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+            for (elem in array) {
+                if (elem.x() < result.x) {
+                    result.x = elem.x()
+                }
+                if (elem.y() < result.y) {
+                    result.y = elem.y()
                 }
             }
             return result
