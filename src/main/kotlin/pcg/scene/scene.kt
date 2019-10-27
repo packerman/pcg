@@ -111,7 +111,8 @@ class GeometryNode(
     init {
         for (mesh in geometry.meshes) {
             require((mesh.indexArrays.isEmpty() && materials.size == 1 && 0 in materials) ||
-                    mesh.indexArrays.all { it.material in materials })
+                    (mesh.indexArrays.all { it.material in materials } && materials.keys.all { it in mesh.indexArrays.indices })
+            )
         }
     }
 
