@@ -45,11 +45,10 @@ class SceneCompiler(private val scene: Scene) {
     private val geometries = geometriesByNode.values.toSet()
     private val compiledGeometries: Map<Geometry, GeometryCompiler> = compileGeometries(geometries)
 
-    private val materialsByNode: Map<in Node, Material>
-        get() = scene.nodes.mapNotNull { n -> n as? GeometryNode }
-            .map { n -> n to n.material }
-            .toMap()
-    private val materials = materialsByNode.values.toSet()
+    private val materials: Set<Material>
+        get() = scene.nodes.mapNotNull { it as? GeometryNode }
+            .flatMap { it.materials.values }
+            .toSet()
     private val compiledMaterials: Map<Material, GltfMaterial> = materials.map { it to it.compile() }.toMap()
     private val materialIndex: Map<GltfMaterial, Int> = indexElements(compiledMaterials.values)
 
@@ -57,24 +56,26 @@ class SceneCompiler(private val scene: Scene) {
         .mapNotNull { it as? GeometryNode }
         .map { node ->
             val compiledGeometry = compiledGeometries.getValue(node.geometry)
-            val material = compiledMaterials[node.material]?.let { materialIndex.getValue(it) }
             val mesh = GltfMesh(
                 primitives = if (compiledGeometry.indices.isEmpty()) listOf(
                     Primitive(
                         attributes = compiledGeometry.attributes,
-                        material = material
+                        material = getCompiledMaterialIndex(node, 0)
                     )
-                ) else compiledGeometry.indices.map {
+                ) else compiledGeometry.indices.mapIndexed { localIndex, globalIndex ->
                     Primitive(
                         attributes = compiledGeometry.attributes,
-                        material = material,
-                        indices = it
+                        material = getCompiledMaterialIndex(node, localIndex),
+                        indices = globalIndex
                     )
                 }
             )
             node to mesh
         }
         .toMap()
+
+    private fun getCompiledMaterialIndex(node: GeometryNode, index: Int) =
+        node.materials[index]?.let { compiledMaterials[it] }?.let { materialIndex.getValue(it) }
 
     private val meshIndex: Map<GltfMesh, Int> = indexElements(meshByNode.values)
 

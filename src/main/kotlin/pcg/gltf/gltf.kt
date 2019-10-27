@@ -39,16 +39,17 @@ data class Accessor(
             requireSize(min, type.length, "min")
             hasElementsOf(it, componentType.kClass, "min")
         }
+        byteOffset?.let { require(it % componentType.size == 0) }
     }
 
     companion object {
-        enum class ComponentType(val type: Int, val kClass: KClass<out Number>) {
-            BYTE(5120, Byte::class),
-            UNSIGNED_BYTE(5121, Byte::class),
-            SHORT(5122, Short::class),
-            UNSIGNED_SHORT(5123, Short::class),
-            UNSIGNED_INT(5125, Int::class),
-            FLOAT(5126, Float::class);
+        enum class ComponentType(val type: Int, val kClass: KClass<out Number>, val size: Int) {
+            BYTE(5120, Byte::class, 1),
+            UNSIGNED_BYTE(5121, Byte::class, 1),
+            SHORT(5122, Short::class, 2),
+            UNSIGNED_SHORT(5123, Short::class, 2),
+            UNSIGNED_INT(5125, Int::class, 4),
+            FLOAT(5126, Float::class, 4);
 
             companion object {
                 val serializer = JsonSerializer<ComponentType> { src, _, _ -> JsonPrimitive(src.type) }

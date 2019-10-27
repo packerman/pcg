@@ -31,7 +31,9 @@ internal class SceneKtTest {
         }
         val m = Material()
         val s = scene {
-            node(geometry = g, material = m)
+            node(geometry = g) {
+                material(m)
+            }
         }
 
         val compiledGltf = compile(s)
@@ -110,7 +112,9 @@ internal class SceneKtTest {
         }
         val m = Material()
         val s = scene {
-            node(geometry = g, material = m)
+            node(geometry = g) {
+                material(m)
+            }
         }
 
         val compiledGltf = compile(s)
@@ -210,8 +214,11 @@ internal class SceneKtTest {
         }
         val m = Material()
         val s = scene {
-            node(geometry = g, material = m)
-            node(geometry = g, material = m) {
+            node(geometry = g) {
+                material(m)
+            }
+            node(geometry = g) {
+                material(m)
                 translate(1f, 0f, 0f)
             }
         }
@@ -308,7 +315,7 @@ internal class SceneKtTest {
     }
 
     @Test
-    internal fun shouldCompileManyGeometries() {
+    fun shouldCompileManyGeometries() {
         val triangle = geometry {
             mesh {
                 vertexArray3f(attribute = Position) {
@@ -343,8 +350,11 @@ internal class SceneKtTest {
             diffuse = Color(0f, 0.8f, 0f)
         )
         val s = scene {
-            node(triangle, triangleMaterial)
-            node(square, squareMaterial) {
+            node(triangle) {
+                material(triangleMaterial)
+            }
+            node(square) {
+                material(squareMaterial)
                 translate(1f, 0f, 0f)
             }
         }
@@ -481,6 +491,208 @@ internal class SceneKtTest {
         )
         assertEquals(expectedGltf, compiledGltf)
         writeToFile("TestManyGeometries.gltf", compiledGltf)
+    }
+
+    @Test
+    internal fun shouldCompileMultiMaterialNode() {
+        val red = Material(
+            diffuse = Color(0.8f, 0f, 0f),
+            twoSided = true
+        )
+        val green = Material(
+            diffuse = Color(0f, 0.8f, 0f),
+            twoSided = true
+        )
+        val blue = Material(
+            diffuse = Color(0f, 0f, 0.8f),
+            twoSided = true
+        )
+        val yellow = Material(
+            diffuse = Color(0.8f, 0.8f, 0f),
+            twoSided = true
+        )
+        val g = geometry {
+            mesh {
+                vertexArray3f(attribute = Position) {
+                    add(0f, 0f, 0f)
+                    add(1f, 0f, 0f)
+                    add(0f, 1f, 0f)
+                    add(1f, 1f, 0f)
+
+                    add(2f, 0f, 0f)
+                    add(2f, 1f, 0f)
+                }
+                indexArray(material = 0) {
+                    add(0, 1, 2)
+                }
+                indexArray(material = 1) {
+                    add(1, 3, 2)
+                }
+                indexArray(material = 2) {
+                    add(1, 4, 3)
+                }
+                indexArray(material = 3) {
+                    add(4, 5, 3)
+                }
+            }
+        }
+        val s = scene {
+            node(geometry = g) {
+                material(0, red)
+                material(1, green)
+                material(2, blue)
+                material(3, yellow)
+            }
+        }
+
+        val compiledGltf = compile(s)
+
+        val expectedGltf = Gltf(
+            scenes = listOf(
+                Scene(
+                    nodes = listOf(
+                        0
+                    )
+                )
+            ),
+            nodes = listOf(
+                Node(
+                    mesh = 0
+                )
+            ),
+            meshes = listOf(
+                Mesh(
+                    primitives = listOf(
+                        Primitive(
+                            attributes = mapOf(
+                                Attribute.POSITION to 4
+                            ),
+                            indices = 0,
+                            material = 0
+                        ),
+                        Primitive(
+                            attributes = mapOf(
+                                Attribute.POSITION to 4
+                            ),
+                            indices = 1,
+                            material = 1
+                        ),
+                        Primitive(
+                            attributes = mapOf(
+                                Attribute.POSITION to 4
+                            ),
+                            indices = 2,
+                            material = 2
+                        ),
+                        Primitive(
+                            attributes = mapOf(
+                                Attribute.POSITION to 4
+                            ),
+                            indices = 3,
+                            material = 3
+                        )
+                    )
+                )
+            ),
+            materials = listOf(
+                GltfMaterial(
+                    pbrMetallicRoughness = PbrMetallicRoughness(
+                        baseColorFactor = floatArrayOf(0.8f, 0f, 0f, 1f),
+                        metallicFactor = 0f
+                    ),
+                    doubleSided = true
+                ),
+                GltfMaterial(
+                    pbrMetallicRoughness = PbrMetallicRoughness(
+                        baseColorFactor = floatArrayOf(0f, 0.8f, 0f, 1f),
+                        metallicFactor = 0f
+                    ),
+                    doubleSided = true
+                ),
+                GltfMaterial(
+                    pbrMetallicRoughness = PbrMetallicRoughness(
+                        baseColorFactor = floatArrayOf(0f, 0f, 0.8f, 1f),
+                        metallicFactor = 0f
+                    ),
+                    doubleSided = true
+                ),
+                GltfMaterial(
+                    pbrMetallicRoughness = PbrMetallicRoughness(
+                        baseColorFactor = floatArrayOf(0.8f, 0.8f, 0f, 1f),
+                        metallicFactor = 0f
+                    ),
+                    doubleSided = true
+                )
+            ),
+            bufferViews = listOf(
+                BufferView(
+                    buffer = 0,
+                    byteOffset = 0,
+                    byteLength = 24,
+                    target = Target.ELEMENT_ARRAY_BUFFER
+                ),
+                BufferView(
+                    buffer = 0,
+                    byteOffset = 24,
+                    byteLength = 72,
+                    target = Target.ARRAY_BUFFER
+                )
+            ),
+            accessors = listOf(
+                Accessor(
+                    bufferView = 0,
+                    byteOffset = 0,
+                    componentType = ComponentType.UNSIGNED_SHORT,
+                    count = 3,
+                    type = Type.SCALAR,
+                    max = listOf<Short>(2),
+                    min = listOf<Short>(0)
+                ),
+                Accessor(
+                    bufferView = 0,
+                    byteOffset = 6,
+                    componentType = ComponentType.UNSIGNED_SHORT,
+                    count = 3,
+                    type = Type.SCALAR,
+                    max = listOf<Short>(3),
+                    min = listOf<Short>(1)
+                ),
+                Accessor(
+                    bufferView = 0,
+                    byteOffset = 12,
+                    componentType = ComponentType.UNSIGNED_SHORT,
+                    count = 3,
+                    type = Type.SCALAR,
+                    max = listOf<Short>(4),
+                    min = listOf<Short>(1)
+                ),
+                Accessor(
+                    bufferView = 0,
+                    byteOffset = 18,
+                    componentType = ComponentType.UNSIGNED_SHORT,
+                    count = 3,
+                    type = Type.SCALAR,
+                    max = listOf<Short>(5),
+                    min = listOf<Short>(3)
+                ),
+                Accessor(
+                    bufferView = 1,
+                    componentType = ComponentType.FLOAT,
+                    count = 6,
+                    type = Type.VEC3,
+                    max = listOf(2f, 1f, 0f),
+                    min = listOf(0f, 0f, 0f)
+                )
+            ),
+            buffers = listOf(
+                Buffer(
+                    byteLength = 96,
+                    uri = "data:application/octet-stream;base64,AAABAAIAAQADAAIAAQAEAAMABAAFAAMAAAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAgD8AAAAAAAAAQAAAAAAAAAAAAAAAQAAAgD8AAAAA"
+                )
+            )
+        )
+        assertEquals(expectedGltf, compiledGltf)
+        writeToFile("TestMultiMaterial.gltf", compiledGltf)
     }
 
     companion object {
