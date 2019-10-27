@@ -525,14 +525,14 @@ internal class SceneKtTest {
                 indexArray(material = 0) {
                     add(0, 1, 2)
                 }
+                indexArray(material = 3) {
+                    add(4, 5, 3)
+                }
                 indexArray(material = 1) {
                     add(1, 3, 2)
                 }
                 indexArray(material = 2) {
                     add(1, 4, 3)
-                }
-                indexArray(material = 3) {
-                    add(4, 5, 3)
                 }
             }
         }
@@ -575,21 +575,21 @@ internal class SceneKtTest {
                                 Attribute.POSITION to 4
                             ),
                             indices = 1,
-                            material = 1
+                            material = 3
                         ),
                         Primitive(
                             attributes = mapOf(
                                 Attribute.POSITION to 4
                             ),
                             indices = 2,
-                            material = 2
+                            material = 1
                         ),
                         Primitive(
                             attributes = mapOf(
                                 Attribute.POSITION to 4
                             ),
                             indices = 3,
-                            material = 3
+                            material = 2
                         )
                     )
                 )
@@ -654,8 +654,8 @@ internal class SceneKtTest {
                     componentType = ComponentType.UNSIGNED_SHORT,
                     count = 3,
                     type = Type.SCALAR,
-                    max = listOf<Short>(3),
-                    min = listOf<Short>(1)
+                    max = listOf<Short>(5),
+                    min = listOf<Short>(3)
                 ),
                 Accessor(
                     bufferView = 0,
@@ -663,7 +663,7 @@ internal class SceneKtTest {
                     componentType = ComponentType.UNSIGNED_SHORT,
                     count = 3,
                     type = Type.SCALAR,
-                    max = listOf<Short>(4),
+                    max = listOf<Short>(3),
                     min = listOf<Short>(1)
                 ),
                 Accessor(
@@ -672,8 +672,8 @@ internal class SceneKtTest {
                     componentType = ComponentType.UNSIGNED_SHORT,
                     count = 3,
                     type = Type.SCALAR,
-                    max = listOf<Short>(5),
-                    min = listOf<Short>(3)
+                    max = listOf<Short>(4),
+                    min = listOf<Short>(1)
                 ),
                 Accessor(
                     bufferView = 1,
@@ -687,7 +687,7 @@ internal class SceneKtTest {
             buffers = listOf(
                 Buffer(
                     byteLength = 96,
-                    uri = "data:application/octet-stream;base64,AAABAAIAAQADAAIAAQAEAAMABAAFAAMAAAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAgD8AAAAAAAAAQAAAAAAAAAAAAAAAQAAAgD8AAAAA"
+                    uri = "data:application/octet-stream;base64,AAABAAIABAAFAAMAAQADAAIAAQAEAAMAAAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAgD8AAAAAAAAAQAAAAAAAAAAAAAAAQAAAgD8AAAAA"
                 )
             )
         )

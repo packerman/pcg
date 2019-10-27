@@ -33,7 +33,7 @@ class GeometryCompiler(geometry: Geometry, offset: Offset) {
 
     val attributes: Map<GltfAttribute, Int> = compiledMesh.attributes
 
-    val indices: List<Int> = compiledMesh.indices
+    val indices: Map<Int, Int> = compiledMesh.indices
 
     val offset: Offset = compiledMesh.offset
 }
@@ -54,7 +54,9 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
         attributeMap.getValue(attribute) to baseOffset.accessor + index + indexAccessors.size
     }.toMap()
 
-    val indices: List<Int> = indexAccessors.indices.map { baseOffset.accessor + it }
+    val indices: Map<Int, Int> = mesh.indexArrays.mapIndexed { index, indexArray ->
+        baseOffset.accessor + index to indexArray.material
+    }.toMap()
 
     val offset = Offset(
         buffer = 1,

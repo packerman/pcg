@@ -62,11 +62,11 @@ class SceneCompiler(private val scene: Scene) {
                         attributes = compiledGeometry.attributes,
                         material = getCompiledMaterialIndex(node, 0)
                     )
-                ) else compiledGeometry.indices.mapIndexed { localIndex, globalIndex ->
+                ) else compiledGeometry.indices.map { (index, material) ->
                     Primitive(
                         attributes = compiledGeometry.attributes,
-                        material = getCompiledMaterialIndex(node, localIndex),
-                        indices = globalIndex
+                        material = getCompiledMaterialIndex(node, material),
+                        indices = index
                     )
                 }
             )
