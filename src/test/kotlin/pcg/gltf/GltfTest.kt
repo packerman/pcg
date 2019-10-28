@@ -3,9 +3,9 @@ package pcg.gltf
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
-import pcg.gltf.Accessor.Companion.ComponentType
-import pcg.gltf.Accessor.Companion.Type
-import pcg.gltf.BufferView.Companion.Target
+import pcg.common.BufferTarget
+import pcg.common.ComponentType
+import pcg.common.Type
 
 internal class GltfTest {
 
@@ -31,7 +31,7 @@ internal class GltfTest {
                     BufferView(
                         buffer = 0,
                         byteLength = 100,
-                        target = Target.ARRAY_BUFFER
+                        target = BufferTarget.ARRAY_BUFFER
                     )
                 ),
                 buffers = listOf(

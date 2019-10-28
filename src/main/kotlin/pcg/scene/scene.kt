@@ -1,8 +1,11 @@
 package pcg.scene
 
-import org.joml.Matrix4f
-import org.joml.Vector3f
-import org.joml.Vector3fc
+import org.joml.*
+import pcg.common.AccessorData
+import pcg.common.ComponentType
+import pcg.common.Type
+import pcg.common.WithAccessorData
+import pcg.scene.Float2VertexArray.Companion.Float2VertexArrayBuilder
 import pcg.scene.Float3VertexArray.Companion.Float3VertexArrayBuilder
 import pcg.scene.Geometry.Companion.GeometryBuilder
 import pcg.scene.GeometryNode.Companion.GeometryNodeBuilder
@@ -20,7 +23,7 @@ import java.nio.ByteBuffer
 
 data class Color(val red: Float, val green: Float, val blue: Float, val alpha: Float = 1f)
 
-interface IndexArray<T> : ByteSized, Iterable<Int> {
+interface IndexArray<T> : ByteSized, Iterable<Int>, WithAccessorData {
     val material: Int
         get() = 0
 
@@ -49,6 +52,14 @@ class ShortIndexArray(override val material: Int = 0, private val indices: Short
     }
 
     override fun iterator(): IntIterator = indices.intIterator()
+
+    override val accessorData: AccessorData
+        get() = AccessorData(
+            componentType = ComponentType.UNSIGNED_SHORT,
+            type = Type.SCALAR,
+            max = listOf(max),
+            min = listOf(min)
+        )
 
     companion object {
         class ShortIndexArrayBuilder(private val material: Int = 0) : Builder<ShortIndexArray> {
@@ -136,13 +147,20 @@ class GeometryNode(
 
 data class Material(
     val name: String? = null,
+    val twoSided: Boolean = false,
     val diffuse: Color = Color(1f, 1f, 1f),
     val specular: Color = Color(0f, 0f, 0f),
     val emission: Color = Color(0f, 0f, 0f),
     val opacity: Color = Color(1f, 1f, 1f),
     val transparency: Color = Color(0f, 0f, 0f),
     val specularPower: Float = 1f,
-    val twoSided: Boolean = false
+    val diffuseTexture: Texture? = null,
+    val specularTexture: Texture? = null,
+    val specularPowerTexture: Texture? = null,
+    val emissionTexture: Texture? = null,
+    val opacityTexture: Texture? = null,
+    val transparencyTexture: Texture? = null,
+    val normalTexture: Texture? = null
 ) {
     companion object {
         val default = Material()
@@ -190,6 +208,13 @@ class Mesh(
                 vertexArrays[attribute] = Float3VertexArrayBuilder().apply(block).build()
             }
 
+            fun vertexArray2f(
+                attribute: Attribute,
+                block: Float2VertexArrayBuilder.() -> Unit
+            ) {
+                vertexArrays[attribute] = Float2VertexArrayBuilder().apply(block).build()
+            }
+
             fun indexArray(material: Int = 0, block: ShortIndexArrayBuilder.() -> Unit) {
                 indexArrays.add(ShortIndexArrayBuilder(material).apply(block).build())
             }
@@ -222,15 +247,21 @@ fun scene(block: SceneBuilder.() -> Unit): Scene = SceneBuilder().apply(block).b
 
 class Scene(val nodes: List<Node>) {
 
+    val geometries: Set<Geometry>
+        get() = nodes.mapNotNull { n -> n as? GeometryNode }
+            .map { it.geometry }
+            .toSet()
+
+    val materials: Set<Material>
+        get() = nodes.mapNotNull { it as? GeometryNode }
+            .flatMap { it.materials.values }
+            .toSet()
+
     companion object {
 
         class SceneBuilder : Builder<Scene> {
 
             private val nodes = mutableListOf<Node>()
-
-            fun node(node: Node) {
-                nodes.add(node)
-            }
 
             fun node(geometry: Geometry, block: GeometryNodeBuilder.() -> Unit = {}) {
                 nodes.add(GeometryNodeBuilder(geometry).apply(block).build())
@@ -240,6 +271,8 @@ class Scene(val nodes: List<Node>) {
         }
     }
 }
+
+class Texture(val fileName: String)
 
 interface Transform {
 
@@ -252,7 +285,7 @@ class Translation(val dx: Float, val dy: Float, val dz: Float) : Transform {
 }
 
 
-interface VertexArray<T> : ByteSized {
+interface VertexArray<T> : ByteSized, WithAccessorData {
     val count: Int
 
     val max: T
@@ -282,6 +315,14 @@ class Float3VertexArray(private val vertices: Array<Vector3fc>) : VertexArray<Ve
             putFloat(vertex.z())
         }
     }
+
+    override val accessorData: AccessorData
+        get() = AccessorData(
+            componentType = ComponentType.FLOAT,
+            type = Type.VEC3,
+            max = listOf(max.x(), max.y(), max.z()),
+            min = listOf(min.x(), min.y(), min.z())
+        )
 
     companion object {
 
@@ -322,6 +363,73 @@ class Float3VertexArray(private val vertices: Array<Vector3fc>) : VertexArray<Ve
                 }
                 if (elem.z() < result.z) {
                     result.z = elem.z()
+                }
+            }
+            return result
+        }
+    }
+}
+
+class Float2VertexArray(private val vertices: Array<Vector2fc>) : VertexArray<Vector2fc> {
+
+    override val byteSize: Int = 2 * 4 * vertices.size
+
+    override val count: Int = vertices.size
+
+    override val max: Vector2fc by lazy { maxVector(vertices) }
+
+    override val min: Vector2fc by lazy { minVector(vertices) }
+
+    override val byteStride: Int = 8
+
+    override fun copyToByteBuffer(byteBuffer: ByteBuffer) = with(byteBuffer) {
+        for (vertex in vertices) {
+            putFloat(vertex.x())
+            putFloat(vertex.y())
+        }
+    }
+
+    override val accessorData: AccessorData
+        get() = AccessorData(
+            componentType = ComponentType.FLOAT,
+            type = Type.VEC2,
+            max = listOf(max.x(), max.y()),
+            min = listOf(min.x(), min.y())
+        )
+
+    companion object {
+
+        class Float2VertexArrayBuilder : Builder<Float2VertexArray> {
+            private val vertices = mutableListOf<Vector2fc>()
+
+            fun add(x: Float, y: Float) {
+                vertices.add(Vector2f(x, y))
+            }
+
+            override fun build(): Float2VertexArray = Float2VertexArray(vertices.toTypedArray())
+        }
+
+        private fun maxVector(array: Array<Vector2fc>): Vector2fc {
+            val result = Vector2f(Float.NEGATIVE_INFINITY, Float.NEGATIVE_INFINITY)
+            for (elem in array) {
+                if (elem.x() > result.x) {
+                    result.x = elem.x()
+                }
+                if (elem.y() > result.y) {
+                    result.y = elem.y()
+                }
+            }
+            return result
+        }
+
+        private fun minVector(array: Array<Vector2fc>): Vector2fc {
+            val result = Vector2f(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY)
+            for (elem in array) {
+                if (elem.x() < result.x) {
+                    result.x = elem.x()
+                }
+                if (elem.y() < result.y) {
+                    result.y = elem.y()
                 }
             }
             return result
