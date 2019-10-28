@@ -4,11 +4,14 @@ import pcg.compile.MeshCompiler.Companion.compileGeometries
 import pcg.gltf.Gltf
 import pcg.gltf.Primitive
 import pcg.scene.*
+import pcg.util.emptyToNull
 import pcg.util.indexElements
+import pcg.util.indexUniqueElements
 import pcg.gltf.Material as GltfMaterial
 import pcg.gltf.Mesh as GltfMesh
 import pcg.gltf.Node as GltfNode
 import pcg.gltf.Scene as GltfScene
+import pcg.gltf.Texture as GltfTexture
 
 fun compile(scene: Scene): Gltf =
     SceneCompiler(scene).compile()
@@ -36,12 +39,26 @@ class SceneCompiler(private val scene: Scene) {
         },
         accessors = compiledGeometries.values.flatMap(GeometryCompiler::accessors),
         bufferViews = compiledGeometries.values.flatMap { it.bufferViews },
-        buffers = compiledGeometries.values.map(GeometryCompiler::buffer)
+        buffers = compiledGeometries.values.map(GeometryCompiler::buffer),
+        textures = compiledTextures.values.mapIndexed { i, compiledTexture ->
+            GltfTexture(
+                source = i,
+                sampler = samplerIndex.getValue(compiledTexture.sampler)
+            )
+        }.emptyToNull(),
+        images = compiledTextures.values.map(TextureCompiler::image).emptyToNull(),
+        samplers = samplerIndex.keys.toList().emptyToNull()
     )
 
     private val compiledGeometries: Map<Geometry, GeometryCompiler> = compileGeometries(scene.geometries)
 
-    private val compiledMaterials: Map<Material, GltfMaterial> = scene.materials.map { it to it.compile() }.toMap()
+    private val textures = scene.materials.mapNotNull { it.diffuseTexture }.toSet()
+    private val compiledTextures: Map<Texture, TextureCompiler> = textures.map { it to TextureCompiler(it) }.toMap()
+    private val samplerIndex = indexElements(compiledTextures.values.map(TextureCompiler::sampler))
+    private val textureIndex = indexUniqueElements(textures)
+
+    private val compiledMaterials: Map<Material, GltfMaterial> =
+        scene.materials.map { it to it.compile(textureIndex) }.toMap()
     private val materialIndex: Map<GltfMaterial, Int> = indexElements(compiledMaterials.values)
 
     private val meshByNode: Map<Node, GltfMesh> = scene.nodes

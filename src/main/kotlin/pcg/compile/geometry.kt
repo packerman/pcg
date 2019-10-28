@@ -1,9 +1,9 @@
 package pcg.compile
 
+import pcg.common.BufferTarget
 import pcg.gltf.Accessor
 import pcg.gltf.Buffer
 import pcg.gltf.BufferView
-import pcg.gltf.BufferView.Companion.Target
 import pcg.scene.*
 import pcg.scene.Mesh.Companion.Attribute
 import pcg.util.align
@@ -13,7 +13,7 @@ import pcg.util.remaining
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
-import pcg.gltf.Primitive.Companion.Attribute as GltfAttribute
+import pcg.common.Attribute as GltfAttribute
 
 class GeometryCompiler(geometry: Geometry, offset: Offset) {
 
@@ -113,7 +113,7 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
                     buffer = baseOffset.buffer,
                     byteOffset = 0,
                     byteLength = mesh.indexArrays.byteSize,
-                    target = Target.ELEMENT_ARRAY_BUFFER
+                    target = BufferTarget.ELEMENT_ARRAY_BUFFER
                 )
             )
         }
@@ -125,7 +125,7 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
                     byteOffset = byteOffset,
                     byteLength = vertexArrays.byteSize,
                     byteStride = if (vertexArrays.size > 1) byteStride else null,
-                    target = Target.ARRAY_BUFFER
+                    target = BufferTarget.ARRAY_BUFFER
                 )
             )
             byteOffset += vertexArrays.byteSize

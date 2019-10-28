@@ -1,14 +1,8 @@
 package pcg.gltf
 
 import com.google.gson.GsonBuilder
-import com.google.gson.JsonPrimitive
-import com.google.gson.JsonSerializer
-import pcg.common.ComponentType
-import pcg.common.Type
-import pcg.gltf.BufferView.Companion.Target
-import pcg.gltf.Primitive.Companion.Mode
-import pcg.gltf.Sampler.Companion.Filter
-import pcg.gltf.Sampler.Companion.Wrap
+import com.google.gson.JsonObject
+import pcg.common.*
 import pcg.util.nullIfDefault
 import pcg.validate.*
 import java.io.File
@@ -76,36 +70,25 @@ data class BufferView(
     val byteOffset: Int? = 0,
     val byteLength: Int,
     val byteStride: Int? = null,
-    val target: Target? = null
-) {
-    companion object {
-        enum class Target(val target: Int) {
-            ARRAY_BUFFER(34962),
-            ELEMENT_ARRAY_BUFFER(34963);
-
-            companion object {
-                val serializer = JsonSerializer<Target> { src, _, _ -> JsonPrimitive(src.target) }
-            }
-        }
-    }
-}
+    val target: BufferTarget? = null
+)
 
 /**
  * @see <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-gltf"/>
  */
 data class Gltf(
-    val accessors: List<Accessor>? = null,
     val asset: Asset = Asset.default,
-    val buffers: List<Buffer>? = null,
-    val bufferViews: List<BufferView>? = null,
-    val materials: List<Material>? = null,
-    val images: List<Image>? = null,
-    val meshes: List<Mesh>? = null,
-    val nodes: List<Node>? = null,
-    val samplers: List<Sampler>? = null,
     val scene: Int? = null,
     val scenes: List<Scene>? = null,
-    val textures: List<Texture>? = null
+    val nodes: List<Node>? = null,
+    val meshes: List<Mesh>? = null,
+    val materials: List<Material>? = null,
+    val accessors: List<Accessor>? = null,
+    val bufferViews: List<BufferView>? = null,
+    val textures: List<Texture>? = null,
+    val samplers: List<Sampler>? = null,
+    val buffers: List<Buffer>? = null,
+    val images: List<Image>? = null
 ) {
 
     init {
@@ -126,7 +109,7 @@ data class Gltf(
                 val bufferView = bufferViewIndex?.let { i -> bufferViews?.get(i) }
                 require(
                     bufferView == null ||
-                            bufferView.target != Target.ARRAY_BUFFER ||
+                            bufferView.target != BufferTarget.ARRAY_BUFFER ||
                             accessors.size == 1 ||
                             bufferView.byteStride != null
                 ) { "When two or more accessors use the same bufferView, byteStride must be defined." }
@@ -273,6 +256,7 @@ data class Node(
  */
 data class PbrMetallicRoughness(
     val baseColorFactor: FloatArray? = null,
+    val baseColorTexture: JsonObject? = null,
     val metallicFactor: Float? = null,
     val roughnessFactor: Float? = null
 ) {
@@ -289,6 +273,7 @@ data class PbrMetallicRoughness(
             if (other.baseColorFactor == null) return false
             if (!baseColorFactor.contentEquals(other.baseColorFactor)) return false
         } else if (other.baseColorFactor != null) return false
+        if (baseColorTexture != other.baseColorTexture) return false
         if (metallicFactor != other.metallicFactor) return false
         if (roughnessFactor != other.roughnessFactor) return false
 
@@ -297,6 +282,7 @@ data class PbrMetallicRoughness(
 
     override fun hashCode(): Int {
         var result = baseColorFactor?.contentHashCode() ?: 0
+        result = 31 * result + (baseColorTexture?.hashCode() ?: 0)
         result = 31 * result + (metallicFactor?.hashCode() ?: 0)
         result = 31 * result + (roughnessFactor?.hashCode() ?: 0)
         return result
@@ -311,10 +297,12 @@ data class PbrMetallicRoughness(
 
         fun withoutDefaults(
             baseColorFactor: FloatArray?,
+            baseColorTexture: JsonObject?,
             metallicFactor: Float?,
             roughnessFactor: Float?
         ) = PbrMetallicRoughness(
             nullIfDefault(baseColorFactor, BASE_COLOR_FACTOR_DEFAULT),
+            baseColorTexture,
             nullIfDefault(metallicFactor, METALLIC_FACTOR_DEFAULT),
             nullIfDefault(roughnessFactor, ROUGHNESS_FACTOR_DEFAULT)
         )
@@ -333,30 +321,6 @@ data class Primitive(
     init {
         requireNotEmpty(attributes, "attributes")
     }
-
-    companion object {
-        enum class Attribute {
-            NORMAL,
-            POSITION,
-            TEXCOORD_0
-        }
-
-        enum class Mode {
-            POINTS,
-            LINES,
-            LINE_LOOP,
-            LINE_STRIP,
-            TRIANGLES,
-            TRIANGLE_STRIP,
-            TRIANGLE_FAN;
-
-            companion object {
-                val DEFAULT = TRIANGLES
-
-                val serializer = JsonSerializer<Mode> { src, _, _ -> JsonPrimitive(src.ordinal) }
-            }
-        }
-    }
 }
 
 /**
@@ -373,31 +337,7 @@ data class Sampler(
     }
 
     companion object {
-
         val default = Sampler()
-
-        enum class Filter(val filter: Int) {
-            Nearest(9728),
-            Linear(9729),
-            NearestMipmapNearest(9984),
-            LinearMipmapNearest(9985),
-            NearestMipmapLinear(9986),
-            LinearMipmapLinear(9987);
-
-            companion object {
-                val serializer = JsonSerializer<Filter> { src, _, _ -> JsonPrimitive(src.filter) }
-            }
-        }
-
-        enum class Wrap(val mode: Int) {
-            ClampToEdge(33071),
-            MirroredRepeat(33648),
-            Repeat(10497);
-
-            companion object {
-                val serializer = JsonSerializer<Wrap> { src, _, _ -> JsonPrimitive(src.mode) }
-            }
-        }
     }
 }
 
@@ -427,7 +367,7 @@ fun Gltf.toJson(prettyPrinting: Boolean = false): String {
     }
     builder.registerTypeAdapter(Mode::class.java, Mode.serializer)
     builder.registerTypeAdapter(ComponentType::class.java, ComponentType.serializer)
-    builder.registerTypeAdapter(Target::class.java, Target.serializer)
+    builder.registerTypeAdapter(BufferTarget::class.java, BufferTarget.serializer)
     builder.registerTypeAdapter(Filter::class.java, Filter.serializer)
     builder.registerTypeAdapter(Wrap::class.java, Wrap.serializer)
     val gson = builder.create()

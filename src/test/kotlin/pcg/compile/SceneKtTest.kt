@@ -1,15 +1,14 @@
 package pcg.compile
 
+import com.google.gson.JsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import pcg.common.ComponentType
-import pcg.common.Type
+import pcg.common.*
 import pcg.gltf.*
-import pcg.gltf.BufferView.Companion.Target
-import pcg.gltf.Primitive.Companion.Attribute
 import pcg.scene.Color
 import pcg.scene.Material
 import pcg.scene.Mesh.Companion.Attribute.*
+import pcg.scene.Texture
 import pcg.scene.geometry
 import pcg.scene.scene
 import java.io.File
@@ -71,7 +70,7 @@ internal class SceneKtTest {
                 BufferView(
                     buffer = 0,
                     byteLength = 36,
-                    target = Target.ARRAY_BUFFER
+                    target = BufferTarget.ARRAY_BUFFER
                 )
             ),
             accessors = listOf(
@@ -154,13 +153,13 @@ internal class SceneKtTest {
                     buffer = 0,
                     byteOffset = 0,
                     byteLength = 6,
-                    target = Target.ELEMENT_ARRAY_BUFFER
+                    target = BufferTarget.ELEMENT_ARRAY_BUFFER
                 ),
                 BufferView(
                     buffer = 0,
                     byteOffset = 8,
                     byteLength = 36,
-                    target = Target.ARRAY_BUFFER
+                    target = BufferTarget.ARRAY_BUFFER
                 )
             ),
             accessors = listOf(
@@ -265,14 +264,14 @@ internal class SceneKtTest {
                     buffer = 0,
                     byteOffset = 0,
                     byteLength = 6,
-                    target = Target.ELEMENT_ARRAY_BUFFER
+                    target = BufferTarget.ELEMENT_ARRAY_BUFFER
                 ),
                 BufferView(
                     buffer = 0,
                     byteOffset = 8,
                     byteLength = 72,
                     byteStride = 12,
-                    target = Target.ARRAY_BUFFER
+                    target = BufferTarget.ARRAY_BUFFER
                 )
             ),
             accessors = listOf(
@@ -420,25 +419,25 @@ internal class SceneKtTest {
                     buffer = 0,
                     byteOffset = 0,
                     byteLength = 6,
-                    target = Target.ELEMENT_ARRAY_BUFFER
+                    target = BufferTarget.ELEMENT_ARRAY_BUFFER
                 ),
                 BufferView(
                     buffer = 0,
                     byteOffset = 8,
                     byteLength = 36,
-                    target = Target.ARRAY_BUFFER
+                    target = BufferTarget.ARRAY_BUFFER
                 ),
                 BufferView(
                     buffer = 1,
                     byteOffset = 0,
                     byteLength = 12,
-                    target = Target.ELEMENT_ARRAY_BUFFER
+                    target = BufferTarget.ELEMENT_ARRAY_BUFFER
                 ),
                 BufferView(
                     buffer = 1,
                     byteOffset = 12,
                     byteLength = 48,
-                    target = Target.ARRAY_BUFFER
+                    target = BufferTarget.ARRAY_BUFFER
                 )
             ),
             accessors = listOf(
@@ -628,13 +627,13 @@ internal class SceneKtTest {
                     buffer = 0,
                     byteOffset = 0,
                     byteLength = 24,
-                    target = Target.ELEMENT_ARRAY_BUFFER
+                    target = BufferTarget.ELEMENT_ARRAY_BUFFER
                 ),
                 BufferView(
                     buffer = 0,
                     byteOffset = 24,
                     byteLength = 72,
-                    target = Target.ARRAY_BUFFER
+                    target = BufferTarget.ARRAY_BUFFER
                 )
             ),
             accessors = listOf(
@@ -722,7 +721,10 @@ internal class SceneKtTest {
                 }
             }
         }
-        val squareMaterial = Material()
+        val squareMaterial = Material(
+            twoSided = true,
+            diffuseTexture = Texture("/textures/CesiumLogoFlat.png")
+        )
         val s = scene {
             node(square) {
                 material(squareMaterial)
@@ -746,7 +748,11 @@ internal class SceneKtTest {
             ),
             materials = listOf(
                 GltfMaterial(
+                    doubleSided = true,
                     pbrMetallicRoughness = PbrMetallicRoughness(
+                        baseColorTexture = JsonObject().apply {
+                            addProperty("index", 0)
+                        },
                         metallicFactor = 0f
                     )
                 )
@@ -771,20 +777,20 @@ internal class SceneKtTest {
                     buffer = 0,
                     byteOffset = 0,
                     byteLength = 12,
-                    target = Target.ELEMENT_ARRAY_BUFFER
+                    target = BufferTarget.ELEMENT_ARRAY_BUFFER
                 ),
                 BufferView(
                     buffer = 0,
                     byteOffset = 12,
                     byteStride = 12,
                     byteLength = 96,
-                    target = Target.ARRAY_BUFFER
+                    target = BufferTarget.ARRAY_BUFFER
                 ),
                 BufferView(
                     buffer = 0,
                     byteOffset = 108,
                     byteLength = 32,
-                    target = Target.ARRAY_BUFFER
+                    target = BufferTarget.ARRAY_BUFFER
                 )
             ),
             accessors = listOf(
@@ -823,6 +829,25 @@ internal class SceneKtTest {
                     type = Type.VEC2,
                     max = listOf(1f, 1f),
                     min = listOf(0f, 0f)
+                )
+            ),
+            textures = listOf(
+                Texture(
+                    sampler = 0,
+                    source = 0
+                )
+            ),
+            images = listOf(
+                Image(
+                    uri = javaClass.getResourceAsStream("/textures/CesiumLogoFlat.base64.txt").use { String(it.readBytes()).trim() }
+                )
+            ),
+            samplers = listOf(
+                Sampler(
+                    magFilter = Filter.Linear,
+                    minFilter = Filter.NearestMipmapLinear,
+                    wrapS = Wrap.Repeat,
+                    wrapT = Wrap.Repeat
                 )
             ),
             buffers = listOf(

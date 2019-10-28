@@ -6,6 +6,9 @@ fun <T> indexElements(elements: Iterable<T>): Map<T, Int> = mutableMapOf<T, Int>
     }
 }
 
+fun <T> indexUniqueElements(elements: Iterable<T>): Map<T, Int> =
+    elements.mapIndexed { i, e -> e to i }.toMap()
+
 fun <T> allTheSame(elements: Collection<T>): Boolean =
     if (elements.isEmpty()) true
     else {
@@ -21,3 +24,5 @@ fun ShortArray.intIterator(): IntIterator {
         override fun nextInt(): Int = iterator.nextShort().toInt()
     }
 }
+
+fun <T> List<T>.emptyToNull(): List<T>? = if (isEmpty()) null else this
