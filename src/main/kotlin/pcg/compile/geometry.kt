@@ -7,7 +7,6 @@ import pcg.gltf.BufferView
 import pcg.scene.*
 import pcg.util.align
 import pcg.util.fillBytes
-import pcg.util.indexElements
 import pcg.util.remaining
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -37,11 +36,13 @@ class GeometryCompiler(geometry: Geometry, offset: Offset) {
 
 class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
 
-    private val vertexArraysByByteStride = mesh.vertexArrays.groupBy(VertexArray<*>::byteStride)
-
     private val vertexSerializer = StandardVertexSerializer(mesh.vertexArrays)
 
-    val accessors: Collection<Accessor> by lazy { createIndexAccessors() + createVertexAccessors() }
+    private val vertexAccessors: List<Accessor> by lazy {
+        vertexSerializer.createVertexAccessors(baseOffset.bufferView + if (mesh.indexArrays.isEmpty()) 0 else 1)
+    }
+
+    val accessors: Collection<Accessor> by lazy { createIndexAccessors() + vertexAccessors }
 
     private val vertexBufferViews: List<BufferView> by lazy {
         vertexSerializer.createVertexBufferViews(baseOffset.buffer, align(mesh.indexArrays.byteSize, 4))
@@ -51,7 +52,7 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
 
     val buffer: Buffer by lazy { createBuffer() }
 
-    val attributes: Map<GltfAttribute, Int> = vertexArraysByByteStride.flatMap { it.value }
+    val attributes: Map<GltfAttribute, Int> = vertexSerializer.attributes
         .mapIndexed { index, vertexArray ->
             attributeMap.getValue(vertexArray.attribute) to baseOffset.accessor + mesh.indexArrays.size + index
         }.toMap()
@@ -63,7 +64,7 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
     val offset = Offset(
         buffer = 1,
         bufferView = vertexBufferViews.size + if (mesh.indexArrays.isEmpty()) 0 else 1,
-        accessor = mesh.indexArrays.size + mesh.vertexArrays.size
+        accessor = mesh.indexArrays.size + vertexAccessors.size
     )
 
     private fun createIndexAccessors(): List<Accessor> {
@@ -79,28 +80,6 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
                 max = accessorData.max,
                 min = accessorData.min
             )
-        }
-    }
-
-    private fun createVertexAccessors(): List<Accessor> = mutableListOf<Accessor>().apply {
-        val strideIndex = indexElements(vertexArraysByByteStride.keys)
-        vertexArraysByByteStride.values.forEach { vertexArrays ->
-            var byteOffset = 0
-            vertexArrays.forEach { vertexArray ->
-                val accessorData = vertexArray.accessorData
-                add(
-                    Accessor(
-                        bufferView = strideIndex.getValue(vertexArray.byteStride) + baseOffset.bufferView + if (mesh.indexArrays.isEmpty()) 0 else 1,
-                        byteOffset = byteOffset,
-                        componentType = accessorData.componentType,
-                        count = vertexArray.count,
-                        type = accessorData.type,
-                        max = accessorData.max,
-                        min = accessorData.min
-                    )
-                )
-                byteOffset += vertexArray.byteSize
-            }
         }
     }
 
