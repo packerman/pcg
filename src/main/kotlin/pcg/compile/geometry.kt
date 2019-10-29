@@ -37,21 +37,17 @@ class GeometryCompiler(geometry: Geometry, offset: Offset) {
 
 class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
 
-    private val vertexAccessors: List<Accessor> by lazy { createVertexAccessors() }
+    private val vertexArraysByByteStride = mesh.vertexArrays.groupBy(VertexArray<*>::byteStride)
 
-    private val vertexArraysByByteStride = mesh.vertexArrays.groupBy { it.byteStride }
+    val accessors: Collection<Accessor> by lazy { createIndexAccessors() + createVertexAccessors() }
 
-    private val indexAccessors: List<Accessor> by lazy { createIndexAccessors() }
-
-    val accessors: Collection<Accessor> by lazy { indexAccessors + vertexAccessors }
-
-    val bufferViews: Collection<BufferView> by lazy { createBufferViews() }
+    val bufferViews: Collection<BufferView> by lazy { createIndexBufferViews() + createVertexBufferViews() }
 
     val buffer: Buffer by lazy { createBuffer() }
 
     val attributes: Map<GltfAttribute, Int> = vertexArraysByByteStride.flatMap { it.value }
         .mapIndexed { index, vertexArray ->
-            attributeMap.getValue(vertexArray.attribute) to baseOffset.accessor + indexAccessors.size + index
+            attributeMap.getValue(vertexArray.attribute) to baseOffset.accessor + mesh.indexArrays.size + index
         }.toMap()
 
     val indices: Map<Int, Int> = mesh.indexArrays.mapIndexed { index, indexArray ->
@@ -102,21 +98,21 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
         }
     }
 
-    private fun createBufferViews(): List<BufferView> {
-        val bufferViews = mutableListOf<BufferView>()
-        if (mesh.indexArrays.isNotEmpty()) {
-            bufferViews.add(
-                BufferView(
-                    buffer = baseOffset.buffer,
-                    byteOffset = 0,
-                    byteLength = mesh.indexArrays.byteSize,
-                    target = BufferTarget.ELEMENT_ARRAY_BUFFER
-                )
+    private fun createIndexBufferViews(): List<BufferView> =
+        if (mesh.indexArrays.isEmpty()) emptyList()
+        else listOf(
+            BufferView(
+                buffer = baseOffset.buffer,
+                byteOffset = 0,
+                byteLength = mesh.indexArrays.byteSize,
+                target = BufferTarget.ELEMENT_ARRAY_BUFFER
             )
-        }
+        )
+
+    private fun createVertexBufferViews(): List<BufferView> = mutableListOf<BufferView>().apply {
         var byteOffset = align(mesh.indexArrays.byteSize, 4)
         vertexArraysByByteStride.forEach { (byteStride, vertexArrays) ->
-            bufferViews.add(
+            add(
                 BufferView(
                     buffer = baseOffset.buffer,
                     byteOffset = byteOffset,
@@ -127,7 +123,6 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
             )
             byteOffset += vertexArrays.byteSize
         }
-        return bufferViews
     }
 
     private fun createBuffer(): Buffer {

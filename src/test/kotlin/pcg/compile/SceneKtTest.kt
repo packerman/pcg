@@ -280,8 +280,8 @@ internal class SceneKtTest {
                     componentType = ComponentType.UNSIGNED_SHORT,
                     count = 3,
                     type = Type.SCALAR,
-                    max = listOf(2.toShort()),
-                    min = listOf(0.toShort())
+                    max = listOf<Short>(2),
+                    min = listOf<Short>(0)
                 ),
                 Accessor(
                     bufferView = 1,
@@ -446,8 +446,8 @@ internal class SceneKtTest {
                     componentType = ComponentType.UNSIGNED_SHORT,
                     count = 3,
                     type = Type.SCALAR,
-                    max = listOf(2.toShort()),
-                    min = listOf(0.toShort())
+                    max = listOf<Short>(2),
+                    min = listOf<Short>(0)
                 ),
                 Accessor(
                     bufferView = 1,
@@ -463,8 +463,8 @@ internal class SceneKtTest {
                     componentType = ComponentType.UNSIGNED_SHORT,
                     count = 6,
                     type = Type.SCALAR,
-                    max = listOf(3.toShort()),
-                    min = listOf(0.toShort())
+                    max = listOf<Short>(3),
+                    min = listOf<Short>(0)
                 ),
                 Accessor(
                     bufferView = 3,
