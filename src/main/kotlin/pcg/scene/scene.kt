@@ -298,6 +298,8 @@ interface VertexArray<T> : ByteSized, WithAccessorData {
     val byteStride: Int
 
     fun copyToByteBuffer(byteBuffer: ByteBuffer)
+
+    fun copyToByteBuffer(byteBuffer: ByteBuffer, index: Int)
 }
 
 class Float3VertexArray(override val attribute: Attribute, private val vertices: Array<Vector3fc>) :
@@ -319,6 +321,12 @@ class Float3VertexArray(override val attribute: Attribute, private val vertices:
             putFloat(vertex.y())
             putFloat(vertex.z())
         }
+    }
+
+    override fun copyToByteBuffer(byteBuffer: ByteBuffer, index: Int): Unit = with(byteBuffer) {
+        putFloat(vertices[index].x())
+        putFloat(vertices[index].y())
+        putFloat(vertices[index].z())
     }
 
     override val accessorData: AccessorData
@@ -393,6 +401,11 @@ class Float2VertexArray(override val attribute: Attribute, private val vertices:
             putFloat(vertex.x())
             putFloat(vertex.y())
         }
+    }
+
+    override fun copyToByteBuffer(byteBuffer: ByteBuffer, index: Int): Unit = with(byteBuffer) {
+        putFloat(vertices[index].x())
+        putFloat(vertices[index].y())
     }
 
     override val accessorData: AccessorData

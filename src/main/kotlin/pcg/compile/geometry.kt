@@ -39,9 +39,15 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
 
     private val vertexArraysByByteStride = mesh.vertexArrays.groupBy(VertexArray<*>::byteStride)
 
+    private val vertexSerializer = StandardVertexSerializer(mesh.vertexArrays)
+
     val accessors: Collection<Accessor> by lazy { createIndexAccessors() + createVertexAccessors() }
 
-    val bufferViews: Collection<BufferView> by lazy { createIndexBufferViews() + createVertexBufferViews() }
+    private val vertexBufferViews: List<BufferView> by lazy {
+        vertexSerializer.createVertexBufferViews(baseOffset.buffer, align(mesh.indexArrays.byteSize, 4))
+    }
+
+    val bufferViews: Collection<BufferView> by lazy { createIndexBufferViews() + vertexBufferViews }
 
     val buffer: Buffer by lazy { createBuffer() }
 
@@ -56,7 +62,7 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
 
     val offset = Offset(
         buffer = 1,
-        bufferView = vertexArraysByByteStride.size + if (mesh.indexArrays.isEmpty()) 0 else 1,
+        bufferView = vertexBufferViews.size + if (mesh.indexArrays.isEmpty()) 0 else 1,
         accessor = mesh.indexArrays.size + mesh.vertexArrays.size
     )
 
@@ -109,22 +115,6 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
             )
         )
 
-    private fun createVertexBufferViews(): List<BufferView> = mutableListOf<BufferView>().apply {
-        var byteOffset = align(mesh.indexArrays.byteSize, 4)
-        vertexArraysByByteStride.forEach { (byteStride, vertexArrays) ->
-            add(
-                BufferView(
-                    buffer = baseOffset.buffer,
-                    byteOffset = byteOffset,
-                    byteLength = vertexArrays.byteSize,
-                    byteStride = if (vertexArrays.size > 1) byteStride else null,
-                    target = BufferTarget.ARRAY_BUFFER
-                )
-            )
-            byteOffset += vertexArrays.byteSize
-        }
-    }
-
     private fun createBuffer(): Buffer {
         val byteArray = ByteArray(mesh.alignedByteSize)
         val byteBuffer = ByteBuffer
@@ -135,9 +125,7 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
         }
         byteBuffer.fillBytes(remaining(mesh.indexArrays.byteSize, 4))
 
-        vertexArraysByByteStride.forEach { (_, vertexArrays) ->
-            vertexArrays.forEach { it.copyToByteBuffer(byteBuffer) }
-        }
+        vertexSerializer.copyToByteBuffer(byteBuffer)
 
         return Buffer(
             byteLength = mesh.alignedByteSize,
