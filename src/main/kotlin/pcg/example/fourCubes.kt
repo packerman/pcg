@@ -3,7 +3,6 @@ package pcg.example
 import pcg.compile.compile
 import pcg.gltf.writeToFile
 import pcg.scene.*
-import pcg.scene.Mesh.Companion.Attribute
 
 val cubeGeometry =
     oneMeshGeometry {

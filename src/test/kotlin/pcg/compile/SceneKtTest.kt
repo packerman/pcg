@@ -5,9 +5,9 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import pcg.common.*
 import pcg.gltf.*
+import pcg.scene.Attribute.*
 import pcg.scene.Color
 import pcg.scene.Material
-import pcg.scene.Mesh.Companion.Attribute.*
 import pcg.scene.Texture
 import pcg.scene.geometry
 import pcg.scene.scene

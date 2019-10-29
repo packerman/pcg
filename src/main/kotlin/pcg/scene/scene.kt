@@ -167,17 +167,23 @@ data class Material(
     }
 }
 
+enum class Attribute {
+    Position,
+    Normal,
+    TexCoord
+}
+
 class Mesh(
     val primitive: Primitive = Triangles,
-    val vertexArrays: Map<Attribute, VertexArray<*>>,
+    val vertexArrays: List<VertexArray<*>>,
     val indexArrays: List<IndexArray<*>>
 ) : ByteSized {
     override val byteSize: Int =
-        vertexArrays.values.sumBy(VertexArray<*>::byteSize) + indexArrays.sumBy(IndexArray<*>::byteSize)
+        vertexArrays.sumBy(VertexArray<*>::byteSize) + indexArrays.sumBy(IndexArray<*>::byteSize)
 
     init {
         requireNotEmpty(vertexArrays, "vertexArrays")
-        require(allTheSame(vertexArrays.values.map(VertexArray<*>::count))) { "All Vertex Arrays need to have the same count" }
+        require(allTheSame(vertexArrays.map(VertexArray<*>::count))) { "All Vertex Arrays need to have the same count" }
     }
 
     companion object {
@@ -190,29 +196,23 @@ class Mesh(
             Quads
         }
 
-        enum class Attribute {
-            Position,
-            Normal,
-            TexCoord
-        }
-
         class MeshBuilder(private val primitive: Primitive) : Builder<Mesh> {
 
-            private val vertexArrays = mutableMapOf<Attribute, VertexArray<*>>()
+            private val vertexArrays = mutableListOf<VertexArray<*>>()
             private val indexArrays = mutableListOf<IndexArray<*>>()
 
             fun vertexArray3f(
                 attribute: Attribute,
                 block: Float3VertexArrayBuilder.() -> Unit
             ) {
-                vertexArrays[attribute] = Float3VertexArrayBuilder().apply(block).build()
+                vertexArrays.add(Float3VertexArrayBuilder(attribute).apply(block).build())
             }
 
             fun vertexArray2f(
                 attribute: Attribute,
                 block: Float2VertexArrayBuilder.() -> Unit
             ) {
-                vertexArrays[attribute] = Float2VertexArrayBuilder().apply(block).build()
+                vertexArrays.add(Float2VertexArrayBuilder(attribute).apply(block).build())
             }
 
             fun indexArray(material: Int = 0, block: ShortIndexArrayBuilder.() -> Unit) {
@@ -286,9 +286,13 @@ class Translation(val dx: Float, val dy: Float, val dz: Float) : Transform {
 
 
 interface VertexArray<T> : ByteSized, WithAccessorData {
+
+    val attribute: Attribute
+
     val count: Int
 
     val max: T
+
     val min: T
 
     val byteStride: Int
@@ -296,7 +300,8 @@ interface VertexArray<T> : ByteSized, WithAccessorData {
     fun copyToByteBuffer(byteBuffer: ByteBuffer)
 }
 
-class Float3VertexArray(private val vertices: Array<Vector3fc>) : VertexArray<Vector3fc> {
+class Float3VertexArray(override val attribute: Attribute, private val vertices: Array<Vector3fc>) :
+    VertexArray<Vector3fc> {
 
     override val byteSize: Int = 3 * 4 * vertices.size
 
@@ -326,14 +331,14 @@ class Float3VertexArray(private val vertices: Array<Vector3fc>) : VertexArray<Ve
 
     companion object {
 
-        class Float3VertexArrayBuilder : Builder<Float3VertexArray> {
+        class Float3VertexArrayBuilder(private val attribute: Attribute) : Builder<Float3VertexArray> {
             private val vertices = mutableListOf<Vector3fc>()
 
             fun add(x: Float, y: Float, z: Float) {
                 vertices.add(Vector3f(x, y, z))
             }
 
-            override fun build(): Float3VertexArray = Float3VertexArray(vertices.toTypedArray())
+            override fun build(): Float3VertexArray = Float3VertexArray(attribute, vertices.toTypedArray())
         }
 
         private fun maxVector(array: Array<Vector3fc>): Vector3fc {
@@ -370,7 +375,8 @@ class Float3VertexArray(private val vertices: Array<Vector3fc>) : VertexArray<Ve
     }
 }
 
-class Float2VertexArray(private val vertices: Array<Vector2fc>) : VertexArray<Vector2fc> {
+class Float2VertexArray(override val attribute: Attribute, private val vertices: Array<Vector2fc>) :
+    VertexArray<Vector2fc> {
 
     override val byteSize: Int = 2 * 4 * vertices.size
 
@@ -399,14 +405,14 @@ class Float2VertexArray(private val vertices: Array<Vector2fc>) : VertexArray<Ve
 
     companion object {
 
-        class Float2VertexArrayBuilder : Builder<Float2VertexArray> {
+        class Float2VertexArrayBuilder(private val attribute: Attribute) : Builder<Float2VertexArray> {
             private val vertices = mutableListOf<Vector2fc>()
 
             fun add(x: Float, y: Float) {
                 vertices.add(Vector2f(x, y))
             }
 
-            override fun build(): Float2VertexArray = Float2VertexArray(vertices.toTypedArray())
+            override fun build(): Float2VertexArray = Float2VertexArray(attribute, vertices.toTypedArray())
         }
 
         private fun maxVector(array: Array<Vector2fc>): Vector2fc {
