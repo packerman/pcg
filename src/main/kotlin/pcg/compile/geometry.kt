@@ -5,7 +5,6 @@ import pcg.gltf.Accessor
 import pcg.gltf.Buffer
 import pcg.gltf.BufferView
 import pcg.scene.*
-import pcg.scene.Mesh.Companion.Attribute
 import pcg.util.align
 import pcg.util.fillBytes
 import pcg.util.indexElements
@@ -40,8 +39,7 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
 
     private val vertexAccessors: List<Accessor> by lazy { createVertexAccessors() }
 
-    private val vertexArraysByByteStride = mesh.vertexArrays.values.groupBy { it.byteStride }
-    private val vertexArraysByByteStrideOrder: List<VertexArray<*>> = vertexArraysByByteStride.values.flatten()
+    private val vertexArraysByByteStride = mesh.vertexArrays.groupBy { it.byteStride }
 
     private val indexAccessors: List<Accessor> by lazy { createIndexAccessors() }
 
@@ -51,12 +49,10 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
 
     val buffer: Buffer by lazy { createBuffer() }
 
-    val attributes: Map<GltfAttribute, Int> = mesh.vertexArrays.map { (attribute, vertexArray) ->
-        attributeMap.getValue(attribute) to
-                baseOffset.accessor +
-                indexAccessors.size +
-                vertexArraysByByteStrideOrder.indexOf(vertexArray)
-    }.toMap()
+    val attributes: Map<GltfAttribute, Int> = vertexArraysByByteStride.flatMap { it.value }
+        .mapIndexed { index, vertexArray ->
+            attributeMap.getValue(vertexArray.attribute) to baseOffset.accessor + indexAccessors.size + index
+        }.toMap()
 
     val indices: Map<Int, Int> = mesh.indexArrays.mapIndexed { index, indexArray ->
         baseOffset.accessor + index to indexArray.material
@@ -84,23 +80,24 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
         }
     }
 
-    private fun createVertexAccessors(): List<Accessor> {
+    private fun createVertexAccessors(): List<Accessor> = mutableListOf<Accessor>().apply {
         val strideIndex = indexElements(vertexArraysByByteStride.keys)
-        return vertexArraysByByteStride.flatMap { (_, vertexArrays) ->
+        vertexArraysByByteStride.values.forEach { vertexArrays ->
             var byteOffset = 0
-            vertexArrays.map { vertexArray ->
+            vertexArrays.forEach { vertexArray ->
                 val accessorData = vertexArray.accessorData
-                Accessor(
-                    bufferView = strideIndex.getValue(vertexArray.byteStride) + baseOffset.bufferView + if (mesh.indexArrays.isEmpty()) 0 else 1,
-                    byteOffset = byteOffset,
-                    componentType = accessorData.componentType,
-                    count = vertexArray.count,
-                    type = accessorData.type,
-                    max = accessorData.max,
-                    min = accessorData.min
-                ).also {
-                    byteOffset += vertexArray.byteSize
-                }
+                add(
+                    Accessor(
+                        bufferView = strideIndex.getValue(vertexArray.byteStride) + baseOffset.bufferView + if (mesh.indexArrays.isEmpty()) 0 else 1,
+                        byteOffset = byteOffset,
+                        componentType = accessorData.componentType,
+                        count = vertexArray.count,
+                        type = accessorData.type,
+                        max = accessorData.max,
+                        min = accessorData.min
+                    )
+                )
+                byteOffset += vertexArray.byteSize
             }
         }
     }
