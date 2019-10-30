@@ -13,13 +13,13 @@ import java.nio.ByteOrder
 import java.util.*
 import pcg.common.Attribute as GltfAttribute
 
-class GeometryCompiler(geometry: Geometry, offset: Offset) {
+class GeometryCompiler(options: CompileOptions, geometry: Geometry, offset: Offset) {
 
     init {
         require(geometry.meshes.size == 1) { "Only one mesh in geometry is supported so far (Constraint to be removed)" }
     }
 
-    private val compiledMesh = MeshCompiler(geometry.meshes[0], offset)
+    private val compiledMesh = MeshCompiler(options, geometry.meshes[0], offset)
 
     val accessors: Collection<Accessor> by lazy { compiledMesh.accessors }
 
@@ -34,9 +34,11 @@ class GeometryCompiler(geometry: Geometry, offset: Offset) {
     val offset: Offset = compiledMesh.offset
 }
 
-class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
+class MeshCompiler(private val options: CompileOptions, private val mesh: Mesh, private val baseOffset: Offset) {
 
-    private val vertexSerializer = StandardVertexSerializer(mesh.vertexArrays)
+    private val vertexSerializer =
+        if (options.interleaved) InterleavedVertexSerializer(mesh.vertexArrays)
+        else StandardVertexSerializer(mesh.vertexArrays)
 
     private val vertexAccessors: List<Accessor> by lazy {
         vertexSerializer.createVertexAccessors(baseOffset.bufferView + if (mesh.indexArrays.isEmpty()) 0 else 1)
@@ -120,11 +122,11 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
             Attribute.TexCoord to GltfAttribute.TEXCOORD_0
         )
 
-        fun compileGeometries(geometries: Set<Geometry>): Map<Geometry, GeometryCompiler> =
+        fun compileGeometries(options: CompileOptions, geometries: Set<Geometry>): Map<Geometry, GeometryCompiler> =
             mutableMapOf<Geometry, GeometryCompiler>().apply {
                 var offset = Offset()
                 for (geometry in geometries) {
-                    val compiled = GeometryCompiler(geometry, offset)
+                    val compiled = GeometryCompiler(options, geometry, offset)
                     put(geometry, compiled)
                     offset += compiled.offset
                 }
