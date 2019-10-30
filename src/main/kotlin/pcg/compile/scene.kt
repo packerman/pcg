@@ -13,10 +13,14 @@ import pcg.gltf.Node as GltfNode
 import pcg.gltf.Scene as GltfScene
 import pcg.gltf.Texture as GltfTexture
 
-fun compile(scene: Scene): Gltf =
-    SceneCompiler(scene).compile()
+fun compile(scene: Scene, options: CompileOptions = CompileOptions()): Gltf =
+    SceneCompiler(options, scene).compile()
 
-class SceneCompiler(private val scene: Scene) {
+data class CompileOptions(
+    val interleaved: Boolean = false
+)
+
+class SceneCompiler(options: CompileOptions, private val scene: Scene) {
 
     fun compile() = Gltf(
         scenes = listOf(
@@ -50,7 +54,7 @@ class SceneCompiler(private val scene: Scene) {
         samplers = samplerIndex.keys.toList().emptyToNull()
     )
 
-    private val compiledGeometries: Map<Geometry, GeometryCompiler> = compileGeometries(scene.geometries)
+    private val compiledGeometries: Map<Geometry, GeometryCompiler> = compileGeometries(options, scene.geometries)
 
     private val textures = scene.materials.mapNotNull { it.diffuseTexture }.toSet()
     private val compiledTextures: Map<Texture, TextureCompiler> = textures.map { it to TextureCompiler(it) }.toMap()

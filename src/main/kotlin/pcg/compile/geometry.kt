@@ -7,20 +7,19 @@ import pcg.gltf.BufferView
 import pcg.scene.*
 import pcg.util.align
 import pcg.util.fillBytes
-import pcg.util.indexElements
 import pcg.util.remaining
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
 import pcg.common.Attribute as GltfAttribute
 
-class GeometryCompiler(geometry: Geometry, offset: Offset) {
+class GeometryCompiler(options: CompileOptions, geometry: Geometry, offset: Offset) {
 
     init {
         require(geometry.meshes.size == 1) { "Only one mesh in geometry is supported so far (Constraint to be removed)" }
     }
 
-    private val compiledMesh = MeshCompiler(geometry.meshes[0], offset)
+    private val compiledMesh = MeshCompiler(options, geometry.meshes[0], offset)
 
     val accessors: Collection<Accessor> by lazy { compiledMesh.accessors }
 
@@ -35,23 +34,29 @@ class GeometryCompiler(geometry: Geometry, offset: Offset) {
     val offset: Offset = compiledMesh.offset
 }
 
-class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
+class MeshCompiler(private val options: CompileOptions, private val mesh: Mesh, private val baseOffset: Offset) {
 
-    private val vertexAccessors: List<Accessor> by lazy { createVertexAccessors() }
+    private val vertexSerializer =
+        if (options.interleaved) InterleavedVertexSerializer(mesh.vertexArrays)
+        else StandardVertexSerializer(mesh.vertexArrays)
 
-    private val vertexArraysByByteStride = mesh.vertexArrays.groupBy { it.byteStride }
+    private val vertexAccessors: List<Accessor> by lazy {
+        vertexSerializer.createVertexAccessors(baseOffset.bufferView + if (mesh.indexArrays.isEmpty()) 0 else 1)
+    }
 
-    private val indexAccessors: List<Accessor> by lazy { createIndexAccessors() }
+    val accessors: Collection<Accessor> by lazy { createIndexAccessors() + vertexAccessors }
 
-    val accessors: Collection<Accessor> by lazy { indexAccessors + vertexAccessors }
+    private val vertexBufferViews: List<BufferView> by lazy {
+        vertexSerializer.createVertexBufferViews(baseOffset.buffer, align(mesh.indexArrays.byteSize, 4))
+    }
 
-    val bufferViews: Collection<BufferView> by lazy { createBufferViews() }
+    val bufferViews: Collection<BufferView> by lazy { createIndexBufferViews() + vertexBufferViews }
 
     val buffer: Buffer by lazy { createBuffer() }
 
-    val attributes: Map<GltfAttribute, Int> = vertexArraysByByteStride.flatMap { it.value }
+    val attributes: Map<GltfAttribute, Int> = vertexSerializer.attributes
         .mapIndexed { index, vertexArray ->
-            attributeMap.getValue(vertexArray.attribute) to baseOffset.accessor + indexAccessors.size + index
+            attributeMap.getValue(vertexArray.attribute) to baseOffset.accessor + mesh.indexArrays.size + index
         }.toMap()
 
     val indices: Map<Int, Int> = mesh.indexArrays.mapIndexed { index, indexArray ->
@@ -60,8 +65,8 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
 
     val offset = Offset(
         buffer = 1,
-        bufferView = vertexArraysByByteStride.size + if (mesh.indexArrays.isEmpty()) 0 else 1,
-        accessor = mesh.indexArrays.size + mesh.vertexArrays.size
+        bufferView = vertexBufferViews.size + if (mesh.indexArrays.isEmpty()) 0 else 1,
+        accessor = mesh.indexArrays.size + vertexAccessors.size
     )
 
     private fun createIndexAccessors(): List<Accessor> {
@@ -80,55 +85,16 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
         }
     }
 
-    private fun createVertexAccessors(): List<Accessor> = mutableListOf<Accessor>().apply {
-        val strideIndex = indexElements(vertexArraysByByteStride.keys)
-        vertexArraysByByteStride.values.forEach { vertexArrays ->
-            var byteOffset = 0
-            vertexArrays.forEach { vertexArray ->
-                val accessorData = vertexArray.accessorData
-                add(
-                    Accessor(
-                        bufferView = strideIndex.getValue(vertexArray.byteStride) + baseOffset.bufferView + if (mesh.indexArrays.isEmpty()) 0 else 1,
-                        byteOffset = byteOffset,
-                        componentType = accessorData.componentType,
-                        count = vertexArray.count,
-                        type = accessorData.type,
-                        max = accessorData.max,
-                        min = accessorData.min
-                    )
-                )
-                byteOffset += vertexArray.byteSize
-            }
-        }
-    }
-
-    private fun createBufferViews(): List<BufferView> {
-        val bufferViews = mutableListOf<BufferView>()
-        if (mesh.indexArrays.isNotEmpty()) {
-            bufferViews.add(
-                BufferView(
-                    buffer = baseOffset.buffer,
-                    byteOffset = 0,
-                    byteLength = mesh.indexArrays.byteSize,
-                    target = BufferTarget.ELEMENT_ARRAY_BUFFER
-                )
+    private fun createIndexBufferViews(): List<BufferView> =
+        if (mesh.indexArrays.isEmpty()) emptyList()
+        else listOf(
+            BufferView(
+                buffer = baseOffset.buffer,
+                byteOffset = 0,
+                byteLength = mesh.indexArrays.byteSize,
+                target = BufferTarget.ELEMENT_ARRAY_BUFFER
             )
-        }
-        var byteOffset = align(mesh.indexArrays.byteSize, 4)
-        vertexArraysByByteStride.forEach { (byteStride, vertexArrays) ->
-            bufferViews.add(
-                BufferView(
-                    buffer = baseOffset.buffer,
-                    byteOffset = byteOffset,
-                    byteLength = vertexArrays.byteSize,
-                    byteStride = if (vertexArrays.size > 1) byteStride else null,
-                    target = BufferTarget.ARRAY_BUFFER
-                )
-            )
-            byteOffset += vertexArrays.byteSize
-        }
-        return bufferViews
-    }
+        )
 
     private fun createBuffer(): Buffer {
         val byteArray = ByteArray(mesh.alignedByteSize)
@@ -140,9 +106,7 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
         }
         byteBuffer.fillBytes(remaining(mesh.indexArrays.byteSize, 4))
 
-        vertexArraysByByteStride.forEach { (_, vertexArrays) ->
-            vertexArrays.forEach { it.copyToByteBuffer(byteBuffer) }
-        }
+        vertexSerializer.copyToByteBuffer(byteBuffer)
 
         return Buffer(
             byteLength = mesh.alignedByteSize,
@@ -158,11 +122,11 @@ class MeshCompiler(private val mesh: Mesh, private val baseOffset: Offset) {
             Attribute.TexCoord to GltfAttribute.TEXCOORD_0
         )
 
-        fun compileGeometries(geometries: Set<Geometry>): Map<Geometry, GeometryCompiler> =
+        fun compileGeometries(options: CompileOptions, geometries: Set<Geometry>): Map<Geometry, GeometryCompiler> =
             mutableMapOf<Geometry, GeometryCompiler>().apply {
                 var offset = Offset()
                 for (geometry in geometries) {
-                    val compiled = GeometryCompiler(geometry, offset)
+                    val compiled = GeometryCompiler(options, geometry, offset)
                     put(geometry, compiled)
                     offset += compiled.offset
                 }
