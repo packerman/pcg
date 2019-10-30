@@ -22,7 +22,7 @@ interface VertexSerializer {
     fun copyToByteBuffer(byteBuffer: ByteBuffer)
 }
 
-class StandardVertexSerializer(private val vertexArrays: List<VertexArray<*>>) : VertexSerializer {
+class StandardVertexSerializer(vertexArrays: List<VertexArray<*>>) : VertexSerializer {
 
     private val vertexArraysByByteStride = vertexArrays.groupBy(VertexArray<*>::byteStride)
 
@@ -90,7 +90,6 @@ class InterleavedVertexSerializer(private val vertexArrays: List<VertexArray<*>>
                 byteOffset += vertexArray.byteStride
             }
         }
-
 
     override fun createVertexBufferViews(bufferIndex: Int, byteOffset: Int): List<BufferView> =
         listOf(
