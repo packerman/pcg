@@ -26,7 +26,7 @@ class SceneCompiler(options: CompileOptions, private val scene: Scene) {
         scenes = if (scene.nodes.isNotEmpty())
             listOf(
                 GltfScene(
-                    nodes = scene.nodes.indices.toList().emptyToNull()
+                    nodes = scene.nodes.indices.toList()
                 )
             ) else null,
         materials = if (materialIndex.isEmpty()) null else materialIndex.keys.toList(),
