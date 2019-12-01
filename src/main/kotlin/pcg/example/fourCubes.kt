@@ -85,9 +85,9 @@ val cubeGeometry =
         }
     }
 
-fun planeGeometry(a: Float, b: Float): Geometry {
-    val ha = a / 2
-    val hb = b / 2
+fun planeGeometry(width: Float, length: Float): Geometry {
+    val ha = width / 2
+    val hb = length / 2
     return oneMeshGeometry {
         vertexArray3f(attribute = Attribute.Position) {
             add(-ha, 0f, hb)

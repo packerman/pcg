@@ -36,7 +36,8 @@ class TextureCompiler(private val texture: Texture) {
             File(path).extension
 
         private fun readBytesResource(path: String): ByteArray {
-            val stream = requireNotNull(javaClass.getResourceAsStream(path)) { "Resource '$path' not found" }
+            val stream =
+                requireNotNull(TextureCompiler::class.java.getResourceAsStream(path)) { "Resource '$path' not found" }
             return stream.use(InputStream::readAllBytes)
         }
 

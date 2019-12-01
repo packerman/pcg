@@ -71,6 +71,12 @@ class ShortIndexArray(override val material: Int = 0, private val indices: Short
                 indices.add(k)
             }
 
+            fun add(i: Int, j: Int, k: Int) {
+                indices.add(i.toShort())
+                indices.add(j.toShort())
+                indices.add(k.toShort())
+            }
+
             override fun build(): ShortIndexArray = ShortIndexArray(material, indices.toShortArray())
         }
     }
@@ -302,6 +308,10 @@ interface VertexArray<T> : ByteSized, WithAccessorData {
     fun copyToByteBuffer(byteBuffer: ByteBuffer, index: Int)
 }
 
+interface VertexArrayBuilder<V> : Builder<V> {
+    val currentCount: Int
+}
+
 class Float3VertexArray(override val attribute: Attribute, private val vertices: Array<Vector3fc>) :
     VertexArray<Vector3fc> {
 
@@ -339,12 +349,15 @@ class Float3VertexArray(override val attribute: Attribute, private val vertices:
 
     companion object {
 
-        class Float3VertexArrayBuilder(private val attribute: Attribute) : Builder<Float3VertexArray> {
+        class Float3VertexArrayBuilder(private val attribute: Attribute) : VertexArrayBuilder<Float3VertexArray> {
             private val vertices = mutableListOf<Vector3fc>()
 
             fun add(x: Float, y: Float, z: Float) {
                 vertices.add(Vector3f(x, y, z))
             }
+
+            override val currentCount: Int
+                get() = vertices.size
 
             override fun build(): Float3VertexArray = Float3VertexArray(attribute, vertices.toTypedArray())
         }
@@ -418,12 +431,15 @@ class Float2VertexArray(override val attribute: Attribute, private val vertices:
 
     companion object {
 
-        class Float2VertexArrayBuilder(private val attribute: Attribute) : Builder<Float2VertexArray> {
+        class Float2VertexArrayBuilder(private val attribute: Attribute) : VertexArrayBuilder<Float2VertexArray> {
             private val vertices = mutableListOf<Vector2fc>()
 
             fun add(x: Float, y: Float) {
                 vertices.add(Vector2f(x, y))
             }
+
+            override val currentCount: Int
+                get() = vertices.size
 
             override fun build(): Float2VertexArray = Float2VertexArray(attribute, vertices.toTypedArray())
         }
