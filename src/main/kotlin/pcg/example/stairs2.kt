@@ -1,5 +1,7 @@
 package pcg.example
 
+import org.joml.Vector3f
+import org.joml.Vector3fc
 import pcg.compile.CompileOptions
 import pcg.compile.compile
 import pcg.gltf.writeToFile
@@ -19,7 +21,8 @@ fun stairs2(
     return oneMeshGeometry {
         var leftSideIndex: Int? = null
         var rightSideIndex: Int? = null
-        vertexArray3f(attribute = Attribute.Position) {
+        var bottomSideIndex: Int? = null
+        val vertices = vertexArray3f(attribute = Attribute.Position) {
             for (s in 0 until steps) {
                 add(x0, y0 + dy * s, z0 + dz * s)
                 add(x0 + width, y0 + dy * s, z0 + dz * s)
@@ -50,6 +53,12 @@ fun stairs2(
                 add(x0 + width, y0 + dy * (s + 1), z0 + dz * s)
                 add(x0 + width, y0 + dy * (s + 1), z0 + dz * (s + 1))
             }
+
+            bottomSideIndex = currentCount
+            add(x0, y0, z0 - thickness)
+            add(x0, y0 + height - thickness, z0 - length)
+            add(x0 + width, y0 + height - thickness, z0 - length)
+            add(x0 + width, y0, z0 - thickness)
         }
         vertexArray3f(attribute = Attribute.Normal) {
             for (s in 0 until steps) {
@@ -80,6 +89,14 @@ fun stairs2(
                 add(1f, 0f, 0f)
                 add(1f, 0f, 0f)
             }
+
+            bottomSideIndex?.let { index ->
+                val n = normalToTriangle(vertices[index], vertices[index + 1], vertices[index + 3])
+                add(n)
+                add(n)
+                add(n)
+                add(n)
+            }
         }
         indexArray {
             for (s in 0 until steps) {
@@ -103,8 +120,18 @@ fun stairs2(
                     add(index + 2 * s + 2, index + 2 * s + 3, index + 2 * s + 4)
                 }
             }
+            bottomSideIndex?.let { index ->
+                add(index, index + 1, index + 2)
+                add(index + 2, index + 3, index)
+            }
         }
     }
+}
+
+private fun normalToTriangle(p0: Vector3fc, p1: Vector3fc, p2: Vector3fc): Vector3fc {
+    val a = p1.sub(p0, Vector3f())
+    val b = p2.sub(p0, Vector3f())
+    return a.cross(b).normalize()
 }
 
 fun main() {

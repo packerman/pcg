@@ -210,8 +210,10 @@ class Mesh(
             fun vertexArray3f(
                 attribute: Attribute,
                 block: Float3VertexArrayBuilder.() -> Unit
-            ) {
-                vertexArrays.add(Float3VertexArrayBuilder(attribute).apply(block).build())
+            ): Float3VertexArray {
+                val array = Float3VertexArrayBuilder(attribute).apply(block).build()
+                vertexArrays.add(array)
+                return array
             }
 
             fun vertexArray2f(
@@ -303,6 +305,8 @@ interface VertexArray<T> : ByteSized, WithAccessorData {
 
     val byteStride: Int
 
+    operator fun get(index: Int): T
+
     fun copyToByteBuffer(byteBuffer: ByteBuffer)
 
     fun copyToByteBuffer(byteBuffer: ByteBuffer, index: Int)
@@ -324,6 +328,8 @@ class Float3VertexArray(override val attribute: Attribute, private val vertices:
     override val min: Vector3fc by lazy { minVector(vertices) }
 
     override val byteStride: Int = 12
+
+    override fun get(index: Int): Vector3fc = vertices[index]
 
     override fun copyToByteBuffer(byteBuffer: ByteBuffer) = with(byteBuffer) {
         for (vertex in vertices) {
@@ -354,6 +360,10 @@ class Float3VertexArray(override val attribute: Attribute, private val vertices:
 
             fun add(x: Float, y: Float, z: Float) {
                 vertices.add(Vector3f(x, y, z))
+            }
+
+            fun add(v: Vector3fc) {
+                vertices.add(v)
             }
 
             override val currentCount: Int
@@ -408,6 +418,8 @@ class Float2VertexArray(override val attribute: Attribute, private val vertices:
     override val min: Vector2fc by lazy { minVector(vertices) }
 
     override val byteStride: Int = 8
+
+    override fun get(index: Int): Vector2fc = vertices[index]
 
     override fun copyToByteBuffer(byteBuffer: ByteBuffer) = with(byteBuffer) {
         for (vertex in vertices) {
