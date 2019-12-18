@@ -146,6 +146,42 @@ class GeometryNode(
 
             fun material(material: Material) = material(0, material)
 
+            fun material(
+                name: String? = null,
+                twoSided: Boolean = false,
+                diffuse: Color = Color(1f, 1f, 1f),
+                specular: Color = Color(0f, 0f, 0f),
+                emission: Color = Color(0f, 0f, 0f),
+                opacity: Color = Color(1f, 1f, 1f),
+                transparency: Color = Color(0f, 0f, 0f),
+                specularPower: Float = 1f,
+                diffuseTexture: Texture? = null,
+                specularTexture: Texture? = null,
+                specularPowerTexture: Texture? = null,
+                emissionTexture: Texture? = null,
+                opacityTexture: Texture? = null,
+                transparencyTexture: Texture? = null,
+                normalTexture: Texture? = null
+            ) = material(
+                Material(
+                    name,
+                    twoSided,
+                    diffuse,
+                    specular,
+                    emission,
+                    opacity,
+                    transparency,
+                    specularPower,
+                    diffuseTexture,
+                    specularTexture,
+                    specularPowerTexture,
+                    emissionTexture,
+                    opacityTexture,
+                    transparencyTexture,
+                    normalTexture
+                )
+            )
+
             override fun build(): Node = GeometryNode(geometry, materials, transforms)
         }
     }

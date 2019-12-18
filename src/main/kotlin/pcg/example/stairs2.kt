@@ -1,11 +1,13 @@
 package pcg.example
 
-import org.joml.Vector3f
-import org.joml.Vector3fc
 import pcg.compile.CompileOptions
 import pcg.compile.compile
 import pcg.gltf.writeToFile
-import pcg.scene.*
+import pcg.scene.Attribute
+import pcg.scene.Geometry
+import pcg.scene.oneMeshGeometry
+import pcg.scene.scene
+import pcg.util.normalToTriangle
 
 fun stairs2(
     height: Float, length: Float, width: Float,
@@ -62,15 +64,8 @@ fun stairs2(
         }
         vertexArray3f(attribute = Attribute.Normal) {
             for (s in 0 until steps) {
-                add(0f, 0f, 1f)
-                add(0f, 0f, 1f)
-                add(0f, 0f, 1f)
-                add(0f, 0f, 1f)
-
-                add(0f, 1f, 0f)
-                add(0f, 1f, 0f)
-                add(0f, 1f, 0f)
-                add(0f, 1f, 0f)
+                repeat(4) { add(0f, 0f, 1f) }
+                repeat(4) { add(0f, 1f, 0f) }
             }
             add(-1f, 0f, 0f)
             add(-1f, 0f, 0f)
@@ -92,10 +87,7 @@ fun stairs2(
 
             bottomSideIndex?.let { index ->
                 val n = normalToTriangle(vertices[index], vertices[index + 1], vertices[index + 3])
-                add(n)
-                add(n)
-                add(n)
-                add(n)
+                repeat(4) { add(n) }
             }
         }
         indexArray {
@@ -110,14 +102,14 @@ fun stairs2(
                 add(index, index + 2, index + 1)
                 add(index + 1, index + 2, index + 2 * steps + 2)
                 for (s in 0 until steps) {
-                    add(index + 2 * s + 2, index + 2 * s + 4, index + 2 * s + 3)
+                    add(index + 2 * s + 2, index + 2 * s + 3, index + 2 * s + 4)
                 }
             }
             rightSideIndex?.let { index ->
                 add(index, index + 1, index + 2)
                 add(index + 1, index + 2 * steps + 2, index + 2)
                 for (s in 0 until steps) {
-                    add(index + 2 * s + 2, index + 2 * s + 3, index + 2 * s + 4)
+                    add(index + 2 * s + 2, index + 2 * s + 4, index + 2 * s + 3)
                 }
             }
             bottomSideIndex?.let { index ->
@@ -126,12 +118,6 @@ fun stairs2(
             }
         }
     }
-}
-
-private fun normalToTriangle(p0: Vector3fc, p1: Vector3fc, p2: Vector3fc): Vector3fc {
-    val a = p1.sub(p0, Vector3f())
-    val b = p2.sub(p0, Vector3f())
-    return a.cross(b).normalize()
 }
 
 fun main() {
@@ -145,16 +131,13 @@ fun main() {
                 steps = 8
             )
         ) {
-            material(Material(twoSided = true))
+            material(twoSided = false)
         }
         node(
             planeGeometry(75f, 75f)
         ) {
             material(
-                Material(
-                    diffuse = Color(0.5f, 0.5f, 0.5f),
-                    twoSided = false
-                )
+                twoSided = true
             )
             translate(0f, 0f, -10f)
         }

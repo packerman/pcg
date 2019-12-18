@@ -110,16 +110,14 @@ fun main() {
                 sideWalls = true
             )
         ) {
-            material(Material(twoSided = false))
+            material(twoSided = false)
         }
         node(
             planeGeometry(75f, 75f)
         ) {
             material(
-                Material(
                     diffuse = Color(0.5f, 0.5f, 0.5f),
                     twoSided = true
-                )
             )
             translate(0f, 0f, -10f)
         }
