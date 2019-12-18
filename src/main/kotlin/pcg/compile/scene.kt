@@ -23,13 +23,14 @@ data class CompileOptions(
 class SceneCompiler(options: CompileOptions, private val scene: Scene) {
 
     fun compile() = Gltf(
-        scenes = listOf(
-            GltfScene(
-                nodes = scene.nodes.indices.toList()
-            )
-        ),
+        scenes = if (scene.nodes.isNotEmpty())
+            listOf(
+                GltfScene(
+                    nodes = scene.nodes.indices.toList()
+                )
+            ) else null,
         materials = if (materialIndex.isEmpty()) null else materialIndex.keys.toList(),
-        meshes = meshIndex.keys.toList(),
+        meshes = meshIndex.keys.toList().emptyToNull(),
         nodes = scene.nodes.map { node ->
             check(node.transforms.size <= 1) { "Only one transform is supported so far (Constraint to be removed)" }
             GltfNode(
@@ -40,10 +41,10 @@ class SceneCompiler(options: CompileOptions, private val scene: Scene) {
                     }
                 }
             )
-        },
-        accessors = compiledGeometries.values.flatMap(GeometryCompiler::accessors),
-        bufferViews = compiledGeometries.values.flatMap { it.bufferViews },
-        buffers = compiledGeometries.values.map(GeometryCompiler::buffer),
+        }.emptyToNull(),
+        accessors = compiledGeometries.values.flatMap(GeometryCompiler::accessors).emptyToNull(),
+        bufferViews = compiledGeometries.values.flatMap { it.bufferViews }.emptyToNull(),
+        buffers = compiledGeometries.values.map(GeometryCompiler::buffer).emptyToNull(),
         textures = compiledTextures.values.mapIndexed { i, compiledTexture ->
             GltfTexture(
                 source = i,

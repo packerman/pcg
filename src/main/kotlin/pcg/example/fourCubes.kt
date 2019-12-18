@@ -85,9 +85,9 @@ val cubeGeometry =
         }
     }
 
-fun planeGeometry(a: Float, b: Float): Geometry {
-    val ha = a / 2
-    val hb = b / 2
+fun planeGeometry(width: Float, length: Float): Geometry {
+    val ha = width / 2
+    val hb = length / 2
     return oneMeshGeometry {
         vertexArray3f(attribute = Attribute.Position) {
             add(-ha, 0f, hb)
@@ -111,29 +111,27 @@ fun planeGeometry(a: Float, b: Float): Geometry {
 fun main() {
     val s = scene {
         node(cubeGeometry) {
-            material(Material(diffuse = Color(0.8f, 0f, 0f)))
+            material(diffuse = Color(0.8f, 0f, 0f))
             translate(-1.5f, 0f, 1.5f)
         }
         node(cubeGeometry) {
-            material(Material(diffuse = Color(0f, 0.8f, 0f)))
+            material(diffuse = Color(0f, 0.8f, 0f))
             translate(1.5f, 0f, 1.5f)
         }
         node(cubeGeometry) {
-            material(Material(diffuse = Color(0f, 0f, 0.8f)))
+            material(diffuse = Color(0f, 0f, 0.8f))
             translate(-1.5f, 0f, -1.5f)
         }
         node(cubeGeometry) {
-            material(Material(diffuse = Color(0.8f, 0.8f, 0f)))
+            material(diffuse = Color(0.8f, 0.8f, 0f))
             translate(1.5f, 0f, -1.5f)
         }
         node(
             planeGeometry(6f, 6f)
         ) {
             material(
-                Material(
                     diffuse = Color(0.5f, 0.5f, 0.5f),
                     twoSided = true
-                )
             )
             translate(0f, -0.5f, 0f)
         }

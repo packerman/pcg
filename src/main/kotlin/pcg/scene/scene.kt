@@ -71,6 +71,12 @@ class ShortIndexArray(override val material: Int = 0, private val indices: Short
                 indices.add(k)
             }
 
+            fun add(i: Int, j: Int, k: Int) {
+                indices.add(i.toShort())
+                indices.add(j.toShort())
+                indices.add(k.toShort())
+            }
+
             override fun build(): ShortIndexArray = ShortIndexArray(material, indices.toShortArray())
         }
     }
@@ -140,6 +146,42 @@ class GeometryNode(
 
             fun material(material: Material) = material(0, material)
 
+            fun material(
+                name: String? = null,
+                twoSided: Boolean = false,
+                diffuse: Color = Color(1f, 1f, 1f),
+                specular: Color = Color(0f, 0f, 0f),
+                emission: Color = Color(0f, 0f, 0f),
+                opacity: Color = Color(1f, 1f, 1f),
+                transparency: Color = Color(0f, 0f, 0f),
+                specularPower: Float = 1f,
+                diffuseTexture: Texture? = null,
+                specularTexture: Texture? = null,
+                specularPowerTexture: Texture? = null,
+                emissionTexture: Texture? = null,
+                opacityTexture: Texture? = null,
+                transparencyTexture: Texture? = null,
+                normalTexture: Texture? = null
+            ) = material(
+                Material(
+                    name,
+                    twoSided,
+                    diffuse,
+                    specular,
+                    emission,
+                    opacity,
+                    transparency,
+                    specularPower,
+                    diffuseTexture,
+                    specularTexture,
+                    specularPowerTexture,
+                    emissionTexture,
+                    opacityTexture,
+                    transparencyTexture,
+                    normalTexture
+                )
+            )
+
             override fun build(): Node = GeometryNode(geometry, materials, transforms)
         }
     }
@@ -204,8 +246,10 @@ class Mesh(
             fun vertexArray3f(
                 attribute: Attribute,
                 block: Float3VertexArrayBuilder.() -> Unit
-            ) {
-                vertexArrays.add(Float3VertexArrayBuilder(attribute).apply(block).build())
+            ): Float3VertexArray {
+                val array = Float3VertexArrayBuilder(attribute).apply(block).build()
+                vertexArrays.add(array)
+                return array
             }
 
             fun vertexArray2f(
@@ -297,9 +341,15 @@ interface VertexArray<T> : ByteSized, WithAccessorData {
 
     val byteStride: Int
 
+    operator fun get(index: Int): T
+
     fun copyToByteBuffer(byteBuffer: ByteBuffer)
 
     fun copyToByteBuffer(byteBuffer: ByteBuffer, index: Int)
+}
+
+interface VertexArrayBuilder<V> : Builder<V> {
+    val currentCount: Int
 }
 
 class Float3VertexArray(override val attribute: Attribute, private val vertices: Array<Vector3fc>) :
@@ -314,6 +364,8 @@ class Float3VertexArray(override val attribute: Attribute, private val vertices:
     override val min: Vector3fc by lazy { minVector(vertices) }
 
     override val byteStride: Int = 12
+
+    override fun get(index: Int): Vector3fc = vertices[index]
 
     override fun copyToByteBuffer(byteBuffer: ByteBuffer) = with(byteBuffer) {
         for (vertex in vertices) {
@@ -339,12 +391,19 @@ class Float3VertexArray(override val attribute: Attribute, private val vertices:
 
     companion object {
 
-        class Float3VertexArrayBuilder(private val attribute: Attribute) : Builder<Float3VertexArray> {
+        class Float3VertexArrayBuilder(private val attribute: Attribute) : VertexArrayBuilder<Float3VertexArray> {
             private val vertices = mutableListOf<Vector3fc>()
 
             fun add(x: Float, y: Float, z: Float) {
                 vertices.add(Vector3f(x, y, z))
             }
+
+            fun add(v: Vector3fc) {
+                vertices.add(v)
+            }
+
+            override val currentCount: Int
+                get() = vertices.size
 
             override fun build(): Float3VertexArray = Float3VertexArray(attribute, vertices.toTypedArray())
         }
@@ -396,6 +455,8 @@ class Float2VertexArray(override val attribute: Attribute, private val vertices:
 
     override val byteStride: Int = 8
 
+    override fun get(index: Int): Vector2fc = vertices[index]
+
     override fun copyToByteBuffer(byteBuffer: ByteBuffer) = with(byteBuffer) {
         for (vertex in vertices) {
             putFloat(vertex.x())
@@ -418,12 +479,15 @@ class Float2VertexArray(override val attribute: Attribute, private val vertices:
 
     companion object {
 
-        class Float2VertexArrayBuilder(private val attribute: Attribute) : Builder<Float2VertexArray> {
+        class Float2VertexArrayBuilder(private val attribute: Attribute) : VertexArrayBuilder<Float2VertexArray> {
             private val vertices = mutableListOf<Vector2fc>()
 
             fun add(x: Float, y: Float) {
                 vertices.add(Vector2f(x, y))
             }
+
+            override val currentCount: Int
+                get() = vertices.size
 
             override fun build(): Float2VertexArray = Float2VertexArray(attribute, vertices.toTypedArray())
         }

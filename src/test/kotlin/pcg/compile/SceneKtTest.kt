@@ -17,6 +17,18 @@ import pcg.gltf.Material as GltfMaterial
 internal class SceneKtTest {
 
     @Test
+    internal fun shouldCompileEmptyScene() {
+        val s = scene { }
+
+        val expected = Gltf()
+
+        val actual = compile(s)
+        assertEquals(expected, actual)
+
+        writeToFile("TestEmpty.gltf", actual)
+    }
+
+    @Test
     fun shouldCompileTriangleWithoutIndices() {
         val g = geometry {
             mesh {

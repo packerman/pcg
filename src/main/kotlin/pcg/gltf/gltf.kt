@@ -341,6 +341,9 @@ data class Sampler(
     }
 }
 
+/**
+ * See <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-scene"/>
+ */
 data class Scene(
     val nodes: List<Int>? = null,
     val name: String? = null
