@@ -71,7 +71,12 @@ data class BufferView(
     val byteLength: Int,
     val byteStride: Int? = null,
     val target: BufferTarget? = null
-)
+) {
+
+    init {
+        requirePositive(byteLength, "byteLength")
+    }
+}
 
 /**
  * @see <a href="https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-gltf"/>

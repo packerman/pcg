@@ -13,6 +13,9 @@ import pcg.scene.ShortIndexArray.Companion.ShortIndexArrayBuilder
 import pcg.scene.oneMeshGeometry
 import pcg.scene.scene
 import pcg.util.Point3fc
+import pcg.util.Vector
+import pcg.util.plus
+import pcg.util.unaryMinus
 
 class Box(
     o: Point3fc, a: Vector3fc, b: Vector3fc, c: Vector3fc,
@@ -23,14 +26,14 @@ class Box(
 ) {
 
     private val frontWall: Plane? = if (front) Plane(o, a, b, m, n) else null
-    private val rightWall: Plane? = if (right) Plane(o.add(a, Vector3f()), c, b, p, n) else null
-    private val backWall: Plane? = if (back) Plane(Vector3f(o).add(a).add(c), a.negate(Vector3f()), b, m, n) else null
-    private val leftWall: Plane? = if (left) Plane(o.add(c, Vector3f()), c.negate(Vector3f()), b, p, n) else null
-    private val topWall: Plane? = if (top) Plane(o.add(b, Vector3f()), a, c, m, p) else null
-    private val bottomWall: Plane? = if (bottom) Plane(o.add(c, Vector3f()), a, c.negate(Vector3f()), m, p) else null
+    private val rightWall: Plane? = if (right) Plane(o + a, c, b, p, n) else null
+    private val backWall: Plane? = if (back) Plane(Vector.add(o, a, c), -a, b, m, n) else null
+    private val leftWall: Plane? = if (left) Plane(o + c, -c, b, p, n) else null
+    private val topWall: Plane? = if (top) Plane(o + b, a, c, m, p) else null
+    private val bottomWall: Plane? = if (bottom) Plane(o + c, a, -c, m, p) else null
 
     private val walls: List<Plane> =
-        sequenceOf(frontWall, rightWall, backWall, leftWall, topWall, bottomWall).filterNotNull().toList()
+        sequenceOf(/*frontWall,*/ rightWall/*, backWall, leftWall, topWall, bottomWall*/).filterNotNull().toList()
 
     fun provideVertices(builder: Float3VertexArrayBuilder): Unit = with(builder) {
         walls.forEach { wall ->
@@ -46,7 +49,6 @@ class Box(
 
     fun provideIndices(builder: ShortIndexArrayBuilder, offset: Int = 0) = with(builder) {
         var localOffset = offset
-
         walls.forEach { wall ->
             wall.provideIndices(builder, localOffset)
             localOffset += wall.vertexCount
@@ -87,5 +89,5 @@ fun main() {
             material()
         }
     }
-    writeToFile("TestPlane.gltf", compile(s, CompileOptions(interleaved = true)))
+    writeToFile("TestBox.gltf", compile(s, CompileOptions(interleaved = true)))
 }
