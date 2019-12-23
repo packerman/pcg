@@ -3,7 +3,8 @@ package pcg.example
 import pcg.compile.CompileOptions
 import pcg.compile.compile
 import pcg.gltf.writeToFile
-import pcg.scene.Attribute
+import pcg.scene.Attribute.Normal
+import pcg.scene.Attribute.Position
 import pcg.scene.Geometry
 import pcg.scene.oneMeshGeometry
 import pcg.scene.scene
@@ -24,7 +25,7 @@ fun stairs2(
         var leftSideIndex: Int? = null
         var rightSideIndex: Int? = null
         var bottomSideIndex: Int? = null
-        val vertices = vertexArray3f(attribute = Attribute.Position) {
+        val vertices = vertexArray3f(attribute = Position) {
             for (s in 0 until steps) {
                 add(x0, y0 + dy * s, z0 + dz * s)
                 add(x0 + width, y0 + dy * s, z0 + dz * s)
@@ -62,7 +63,7 @@ fun stairs2(
             add(x0 + width, y0 + height - thickness, z0 - length)
             add(x0 + width, y0, z0 - thickness)
         }
-        vertexArray3f(attribute = Attribute.Normal) {
+        vertexArray3f(attribute = Normal) {
             for (s in 0 until steps) {
                 repeat(4) { add(0f, 0f, 1f) }
                 repeat(4) { add(0f, 1f, 0f) }
@@ -134,7 +135,7 @@ fun main() {
             material(twoSided = false)
         }
         node(
-            simplePlaneGeometry(75f, 75f)
+            planeGeometry(75f, 75f)
         ) {
             material(
                 twoSided = true

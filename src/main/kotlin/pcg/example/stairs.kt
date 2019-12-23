@@ -3,7 +3,12 @@ package pcg.example
 import pcg.compile.CompileOptions
 import pcg.compile.compile
 import pcg.gltf.writeToFile
-import pcg.scene.*
+import pcg.scene.Attribute.Normal
+import pcg.scene.Attribute.Position
+import pcg.scene.Color
+import pcg.scene.Geometry
+import pcg.scene.oneMeshGeometry
+import pcg.scene.scene
 
 fun stairs(
     height: Float, length: Float, width: Float, steps: Int,
@@ -18,7 +23,7 @@ fun stairs(
     return oneMeshGeometry {
         var leftWallIndex: Int? = null
         var rightWallIndex: Int? = null
-        vertexArray3f(attribute = Attribute.Position) {
+        vertexArray3f(attribute = Position) {
             for (s in 0 until steps) {
                 add(x0, y0 + dy * s, z0 + dz * s)
                 add(x0 + width, y0 + dy * s, z0 + dz * s)
@@ -50,7 +55,7 @@ fun stairs(
                 add(x0 + width, y0 + height, z0)
             }
         }
-        vertexArray3f(attribute = Attribute.Normal) {
+        vertexArray3f(attribute = Normal) {
             for (s in 0 until steps) {
                 add(0f, 0f, 1f)
                 add(0f, 0f, 1f)
@@ -113,7 +118,7 @@ fun main() {
             material(twoSided = false)
         }
         node(
-            simplePlaneGeometry(75f, 75f)
+            planeGeometry(75f, 75f)
         ) {
             material(
                     diffuse = Color(0.5f, 0.5f, 0.5f),
