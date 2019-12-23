@@ -113,7 +113,7 @@ fun main() {
             material(twoSided = false)
         }
         node(
-            planeGeometry(75f, 75f)
+            simplePlaneGeometry(75f, 75f)
         ) {
             material(
                     diffuse = Color(0.5f, 0.5f, 0.5f),

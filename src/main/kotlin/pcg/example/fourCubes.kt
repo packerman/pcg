@@ -4,7 +4,7 @@ import pcg.compile.compile
 import pcg.gltf.writeToFile
 import pcg.scene.*
 
-val cubeGeometry =
+private val cubeGeometry =
     oneMeshGeometry {
         vertexArray3f(attribute = Attribute.Position) {
             add(-0.5f, -0.5f, -0.5f)
@@ -85,7 +85,7 @@ val cubeGeometry =
         }
     }
 
-fun planeGeometry(width: Float, length: Float): Geometry {
+internal fun simplePlaneGeometry(width: Float, length: Float): Geometry {
     val ha = width / 2
     val hb = length / 2
     return oneMeshGeometry {
@@ -127,7 +127,7 @@ fun main() {
             translate(1.5f, 0f, -1.5f)
         }
         node(
-            planeGeometry(6f, 6f)
+            simplePlaneGeometry(6f, 6f)
         ) {
             material(
                     diffuse = Color(0.5f, 0.5f, 0.5f),

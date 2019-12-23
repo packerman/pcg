@@ -38,7 +38,7 @@ class TextureCompiler(private val texture: Texture) {
         private fun readBytesResource(path: String): ByteArray {
             val stream =
                 requireNotNull(TextureCompiler::class.java.getResourceAsStream(path)) { "Resource '$path' not found" }
-            return stream.use(InputStream::readAllBytes)
+            return stream.use(InputStream::readBytes)
         }
 
         private val encoder = Base64.getEncoder()
