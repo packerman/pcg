@@ -33,9 +33,9 @@ internal class SceneKtTest {
         val g = geometry {
             mesh {
                 vertexArray3f(attribute = Position) {
-                    add(0f, 0f, 0f)
-                    add(1f, 0f, 0f)
-                    add(0f, 1f, 0f)
+                    vertex(0f, 0f, 0f)
+                    vertex(1f, 0f, 0f)
+                    vertex(0f, 1f, 0f)
                 }
             }
         }
@@ -111,12 +111,12 @@ internal class SceneKtTest {
         val g = geometry {
             mesh {
                 vertexArray3f(attribute = Position) {
-                    add(0f, 0f, 0f)
-                    add(1f, 0f, 0f)
-                    add(0f, 1f, 0f)
+                    vertex(0f, 0f, 0f)
+                    vertex(1f, 0f, 0f)
+                    vertex(0f, 1f, 0f)
                 }
                 indexArray {
-                    add(0, 1, 2)
+                    triangle(0, 1, 2)
                 }
             }
         }
@@ -208,17 +208,17 @@ internal class SceneKtTest {
         val g = geometry {
             mesh {
                 vertexArray3f(attribute = Position) {
-                    add(0f, 0f, 0f)
-                    add(1f, 0f, 0f)
-                    add(0f, 1f, 0f)
+                    vertex(0f, 0f, 0f)
+                    vertex(1f, 0f, 0f)
+                    vertex(0f, 1f, 0f)
                 }
                 vertexArray3f(attribute = Normal) {
-                    add(0f, 0f, 1f)
-                    add(0f, 0f, 1f)
-                    add(0f, 0f, 1f)
+                    vertex(0f, 0f, 1f)
+                    vertex(0f, 0f, 1f)
+                    vertex(0f, 0f, 1f)
                 }
                 indexArray {
-                    add(0, 1, 2)
+                    triangle(0, 1, 2)
                 }
             }
         }
@@ -329,12 +329,12 @@ internal class SceneKtTest {
         val triangle = geometry {
             mesh {
                 vertexArray3f(attribute = Position) {
-                    add(0f, 0f, 0f)
-                    add(1f, 0f, 0f)
-                    add(0f, 1f, 0f)
+                    vertex(0f, 0f, 0f)
+                    vertex(1f, 0f, 0f)
+                    vertex(0f, 1f, 0f)
                 }
                 indexArray {
-                    add(0, 1, 2)
+                    triangle(0, 1, 2)
                 }
             }
         }
@@ -344,14 +344,14 @@ internal class SceneKtTest {
         val square = geometry {
             mesh {
                 vertexArray3f(attribute = Position) {
-                    add(0f, 0f, 0f)
-                    add(1f, 0f, 0f)
-                    add(0f, 1f, 0f)
-                    add(1f, 1f, 0f)
+                    vertex(0f, 0f, 0f)
+                    vertex(1f, 0f, 0f)
+                    vertex(0f, 1f, 0f)
+                    vertex(1f, 1f, 0f)
                 }
                 indexArray {
-                    add(0, 1, 2)
-                    add(1, 3, 2)
+                    triangle(0, 1, 2)
+                    triangle(1, 3, 2)
                 }
 
             }
@@ -524,25 +524,25 @@ internal class SceneKtTest {
         val g = geometry {
             mesh {
                 vertexArray3f(attribute = Position) {
-                    add(0f, 0f, 0f)
-                    add(1f, 0f, 0f)
-                    add(0f, 1f, 0f)
-                    add(1f, 1f, 0f)
+                    vertex(0f, 0f, 0f)
+                    vertex(1f, 0f, 0f)
+                    vertex(0f, 1f, 0f)
+                    vertex(1f, 1f, 0f)
 
-                    add(2f, 0f, 0f)
-                    add(2f, 1f, 0f)
+                    vertex(2f, 0f, 0f)
+                    vertex(2f, 1f, 0f)
                 }
                 indexArray(material = 0) {
-                    add(0, 1, 2)
+                    triangle(0, 1, 2)
                 }
                 indexArray(material = 3) {
-                    add(4, 5, 3)
+                    triangle(4, 5, 3)
                 }
                 indexArray(material = 1) {
-                    add(1, 3, 2)
+                    triangle(1, 3, 2)
                 }
                 indexArray(material = 2) {
-                    add(1, 4, 3)
+                    triangle(1, 4, 3)
                 }
             }
         }
@@ -710,26 +710,26 @@ internal class SceneKtTest {
         val square = geometry {
             mesh {
                 vertexArray3f(attribute = Position) {
-                    add(0f, 0f, 0f)
-                    add(1f, 0f, 0f)
-                    add(0f, 1f, 0f)
-                    add(1f, 1f, 0f)
+                    vertex(0f, 0f, 0f)
+                    vertex(1f, 0f, 0f)
+                    vertex(0f, 1f, 0f)
+                    vertex(1f, 1f, 0f)
                 }
                 vertexArray2f(attribute = TexCoord) {
-                    add(0f, 0f)
-                    add(1f, 0f)
-                    add(0f, 1f)
-                    add(1f, 1f)
+                    vertex(0f, 0f)
+                    vertex(1f, 0f)
+                    vertex(0f, 1f)
+                    vertex(1f, 1f)
                 }
                 vertexArray3f(attribute = Normal) {
-                    add(0f, 0f, 1f)
-                    add(0f, 0f, 1f)
-                    add(0f, 0f, 1f)
-                    add(0f, 0f, 1f)
+                    vertex(0f, 0f, 1f)
+                    vertex(0f, 0f, 1f)
+                    vertex(0f, 0f, 1f)
+                    vertex(0f, 0f, 1f)
                 }
                 indexArray {
-                    add(0, 1, 2)
-                    add(1, 3, 2)
+                    triangle(0, 1, 2)
+                    triangle(1, 3, 2)
                 }
             }
         }
@@ -878,26 +878,26 @@ internal class SceneKtTest {
         val square = geometry {
             mesh {
                 vertexArray3f(attribute = Position) {
-                    add(0f, 0f, 0f)
-                    add(1f, 0f, 0f)
-                    add(0f, 1f, 0f)
-                    add(1f, 1f, 0f)
+                    vertex(0f, 0f, 0f)
+                    vertex(1f, 0f, 0f)
+                    vertex(0f, 1f, 0f)
+                    vertex(1f, 1f, 0f)
                 }
                 vertexArray2f(attribute = TexCoord) {
-                    add(0f, 0f)
-                    add(1f, 0f)
-                    add(0f, 1f)
-                    add(1f, 1f)
+                    vertex(0f, 0f)
+                    vertex(1f, 0f)
+                    vertex(0f, 1f)
+                    vertex(1f, 1f)
                 }
                 vertexArray3f(attribute = Normal) {
-                    add(0f, 0f, 1f)
-                    add(0f, 0f, 1f)
-                    add(0f, 0f, 1f)
-                    add(0f, 0f, 1f)
+                    vertex(0f, 0f, 1f)
+                    vertex(0f, 0f, 1f)
+                    vertex(0f, 0f, 1f)
+                    vertex(0f, 0f, 1f)
                 }
                 indexArray {
-                    add(0, 1, 2)
-                    add(1, 3, 2)
+                    triangle(0, 1, 2)
+                    triangle(1, 3, 2)
                 }
             }
         }
