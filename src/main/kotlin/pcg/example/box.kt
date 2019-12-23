@@ -12,10 +12,7 @@ import pcg.scene.Geometry
 import pcg.scene.ShortIndexArray.Companion.ShortIndexArrayBuilder
 import pcg.scene.oneMeshGeometry
 import pcg.scene.scene
-import pcg.util.Point3fc
-import pcg.util.Vector
-import pcg.util.plus
-import pcg.util.unaryMinus
+import pcg.util.*
 
 class Box(
     o: Point3fc, a: Vector3fc, b: Vector3fc, c: Vector3fc,
@@ -33,7 +30,7 @@ class Box(
     private val bottomWall: Plane? = if (bottom) Plane(o + c, a, -c, m, p) else null
 
     private val walls: List<Plane> =
-        sequenceOf(/*frontWall,*/ rightWall/*, backWall, leftWall, topWall, bottomWall*/).filterNotNull().toList()
+        sequenceOf(frontWall, rightWall, backWall, leftWall, topWall, bottomWall).filterNotNull().toList()
 
     fun provideVertices(builder: Float3VertexArrayBuilder): Unit = with(builder) {
         walls.forEach { wall ->
@@ -79,11 +76,11 @@ fun main() {
     val s = scene {
         node(
             box(
-                o = Vector3f(0f, 0f, 0f),
+                o = Point3f(0f, 0f, 0f),
                 a = Vector3f(10f, 0f, 0f),
                 b = Vector3f(0f, 10f, 0f),
                 c = Vector3f(0f, 0f, -10f),
-                m = 4, n = 4, p = 4
+                m = 1, n = 1, p = 1
             )
         ) {
             material()
