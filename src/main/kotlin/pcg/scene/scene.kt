@@ -65,16 +65,21 @@ class ShortIndexArray(override val material: Int = 0, private val indices: Short
         class ShortIndexArrayBuilder(private val material: Int = 0) : Builder<ShortIndexArray> {
             private val indices = mutableListOf<Short>()
 
-            fun add(i: Short, j: Short, k: Short) {
+            fun triangle(i: Short, j: Short, k: Short) {
                 indices.add(i)
                 indices.add(j)
                 indices.add(k)
             }
 
-            fun add(i: Int, j: Int, k: Int) {
+            fun triangle(i: Int, j: Int, k: Int) {
                 indices.add(i.toShort())
                 indices.add(j.toShort())
                 indices.add(k.toShort())
+            }
+
+            fun square(i: Int, j: Int, k: Int, l: Int) {
+                triangle(i, j, l)
+                triangle(j, k, l)
             }
 
             override fun build(): ShortIndexArray = ShortIndexArray(material, indices.toShortArray())
@@ -128,8 +133,10 @@ class GeometryNode(
     init {
         for (mesh in geometry.meshes) {
             require((mesh.indexArrays.isEmpty() && materials.size == 1 && 0 in materials) ||
-                    (mesh.indexArrays.all { it.material in materials } && materials.keys.all { it in mesh.indexArrays.indices })
+                    (mesh.indexArrays.all { it.material in materials } &&
+                            materials.keys.all { it in mesh.indexArrays.indices })
             )
+            { "Node does not have a material or index arrays and materials do not match" }
         }
     }
 
@@ -394,11 +401,11 @@ class Float3VertexArray(override val attribute: Attribute, private val vertices:
         class Float3VertexArrayBuilder(private val attribute: Attribute) : VertexArrayBuilder<Float3VertexArray> {
             private val vertices = mutableListOf<Vector3fc>()
 
-            fun add(x: Float, y: Float, z: Float) {
+            fun vertex(x: Float, y: Float, z: Float) {
                 vertices.add(Vector3f(x, y, z))
             }
 
-            fun add(v: Vector3fc) {
+            fun vertex(v: Vector3fc) {
                 vertices.add(v)
             }
 
@@ -482,7 +489,7 @@ class Float2VertexArray(override val attribute: Attribute, private val vertices:
         class Float2VertexArrayBuilder(private val attribute: Attribute) : VertexArrayBuilder<Float2VertexArray> {
             private val vertices = mutableListOf<Vector2fc>()
 
-            fun add(x: Float, y: Float) {
+            fun vertex(x: Float, y: Float) {
                 vertices.add(Vector2f(x, y))
             }
 
