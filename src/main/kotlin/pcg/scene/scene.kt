@@ -302,6 +302,17 @@ open class NodeContainer(val nodes: List<Node>) {
     }
 }
 
+fun NodeContainer.collectNodes(): List<Node> {
+    fun MutableList<Node>.collectNodes(container: NodeContainer): MutableList<Node> {
+        addAll(container.nodes)
+        container.nodes.forEach { node ->
+            collectNodes(node)
+        }
+        return this
+    }
+    return mutableListOf<Node>().collectNodes(this)
+}
+
 open class Node(val transforms: List<Transform>, nodes: List<Node>) : NodeContainer(nodes) {
 
     companion object {
