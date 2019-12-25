@@ -141,5 +141,5 @@ fun main() {
             translate(0f, -0.5f, 0f)
         }
     }
-    writeToFile("TestFourCubes.gltf", compile(s))
+    writeToFile("TestFourCubes.gltf", s.compile())
 }

@@ -22,7 +22,7 @@ internal class SceneKtTest {
 
         val expected = Gltf()
 
-        val actual = compile(s)
+        val actual = s.compile()
         assertEquals(expected, actual)
 
         writeToFile("TestEmpty.gltf", actual)
@@ -46,7 +46,7 @@ internal class SceneKtTest {
             }
         }
 
-        val compiledGltf = compile(s)
+        val compiledGltf = s.compile()
 
         val expectedGltf = Gltf(
             scenes = listOf(
@@ -127,7 +127,7 @@ internal class SceneKtTest {
             }
         }
 
-        val compiledGltf = compile(s)
+        val compiledGltf = s.compile()
 
         val expectedGltf = Gltf(
             scenes = listOf(
@@ -233,7 +233,7 @@ internal class SceneKtTest {
             }
         }
 
-        val compiledGltf = compile(s)
+        val compiledGltf = s.compile()
 
         val expectedGltf = Gltf(
             scenes = listOf(
@@ -369,7 +369,7 @@ internal class SceneKtTest {
             }
         }
 
-        val compiledGltf = compile(s)
+        val compiledGltf = s.compile()
 
         val expectedGltf = Gltf(
             scenes = listOf(
@@ -555,7 +555,7 @@ internal class SceneKtTest {
             }
         }
 
-        val compiledGltf = compile(s)
+        val compiledGltf = s.compile()
 
         val expectedGltf = Gltf(
             scenes = listOf(
@@ -743,7 +743,7 @@ internal class SceneKtTest {
             }
         }
 
-        val compiledGltf = compile(s)
+        val compiledGltf = s.compile()
 
         val expectedGltf = Gltf(
             scenes = listOf(
@@ -911,7 +911,7 @@ internal class SceneKtTest {
             }
         }
 
-        val compiledGltf = compile(s, CompileOptions(interleaved = true))
+        val compiledGltf = s.compile(CompileOptions(interleaved = true))
 
         val expectedGltf = Gltf(
             scenes = listOf(

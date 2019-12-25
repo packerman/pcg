@@ -145,5 +145,5 @@ fun main() {
 
     }
 
-    writeToFile("TestStairs2.gltf", compile(s, CompileOptions(interleaved = true)))
+    writeToFile("TestStairs2.gltf", s.compile(CompileOptions(interleaved = true)))
 }

@@ -13,8 +13,8 @@ import pcg.gltf.Node as GltfNode
 import pcg.gltf.Scene as GltfScene
 import pcg.gltf.Texture as GltfTexture
 
-fun compile(scene: Scene, options: CompileOptions = CompileOptions()): Gltf =
-    SceneCompiler(options, scene).compile()
+fun Scene.compile(options: CompileOptions = CompileOptions()): Gltf =
+    SceneCompiler(options, this).compile()
 
 data class CompileOptions(
     val interleaved: Boolean = false

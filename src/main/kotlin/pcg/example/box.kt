@@ -86,5 +86,5 @@ fun main() {
             material()
         }
     }
-    writeToFile("TestBox.gltf", compile(s, CompileOptions(interleaved = true)))
+    writeToFile("TestBox.gltf", s.compile(CompileOptions(interleaved = true)))
 }

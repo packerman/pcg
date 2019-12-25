@@ -13,6 +13,7 @@ import pcg.scene.Mesh.Companion.MeshBuilder
 import pcg.scene.Mesh.Companion.Primitive
 import pcg.scene.Mesh.Companion.Primitive.Triangles
 import pcg.scene.Node.Companion.NodeBuilder
+import pcg.scene.NodeContainer.Companion.NodeContainerBuilder
 import pcg.scene.Scene.Companion.SceneBuilder
 import pcg.scene.ShortIndexArray.Companion.ShortIndexArrayBuilder
 import pcg.util.align
@@ -127,8 +128,9 @@ class Geometry(val meshes: List<Mesh>) : ByteSized {
 class GeometryNode(
     val geometry: Geometry,
     val materials: Map<Int, Material>,
-    transforms: List<Transform>
-) : Node(transforms) {
+    transforms: List<Transform>,
+    nodes: List<Node>
+) : Node(transforms, nodes) {
 
     init {
         for (mesh in geometry.meshes) {
@@ -189,7 +191,7 @@ class GeometryNode(
                 )
             )
 
-            override fun build(): Node = GeometryNode(geometry, materials, transforms)
+            override fun build(): Node = GeometryNode(geometry, materials, transforms, nodes)
         }
     }
 }
@@ -277,11 +279,34 @@ class Mesh(
     }
 }
 
-open class Node(val transforms: List<Transform>) {
+open class NodeContainer(val nodes: List<Node>) {
 
     companion object {
 
-        open class NodeBuilder : Builder<Node> {
+        open class NodeContainerBuilder : Builder<NodeContainer> {
+
+            protected val nodes = mutableListOf<Node>()
+
+            fun node(geometry: Geometry, block: GeometryNodeBuilder.() -> Unit = {}) {
+                nodes.add(GeometryNodeBuilder(geometry).apply(block).build())
+            }
+
+            fun node(block: NodeBuilder.() -> Unit = {}) {
+                nodes.add(NodeBuilder().apply(block).build())
+            }
+
+            override fun build(): NodeContainer {
+                return NodeContainer(nodes)
+            }
+        }
+    }
+}
+
+open class Node(val transforms: List<Transform>, nodes: List<Node>) : NodeContainer(nodes) {
+
+    companion object {
+
+        open class NodeBuilder : NodeContainerBuilder() {
 
             protected val transforms = mutableListOf<Transform>()
 
@@ -289,14 +314,14 @@ open class Node(val transforms: List<Transform>) {
                 transforms.add(Translation(dx, dy, dz))
             }
 
-            override fun build() = Node(transforms)
+            override fun build() = Node(transforms, nodes)
         }
     }
 }
 
 fun scene(block: SceneBuilder.() -> Unit): Scene = SceneBuilder().apply(block).build()
 
-class Scene(val nodes: List<Node>) {
+class Scene(nodes: List<Node>) : NodeContainer(nodes) {
 
     val geometries: Set<Geometry>
         get() = nodes.mapNotNull { n -> n as? GeometryNode }
@@ -310,13 +335,7 @@ class Scene(val nodes: List<Node>) {
 
     companion object {
 
-        class SceneBuilder : Builder<Scene> {
-
-            private val nodes = mutableListOf<Node>()
-
-            fun node(geometry: Geometry, block: GeometryNodeBuilder.() -> Unit = {}) {
-                nodes.add(GeometryNodeBuilder(geometry).apply(block).build())
-            }
+        class SceneBuilder : NodeContainerBuilder() {
 
             override fun build(): Scene = Scene(nodes)
         }
