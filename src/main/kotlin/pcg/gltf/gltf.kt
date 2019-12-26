@@ -214,19 +214,19 @@ data class Node(
     val children: List<Int>? = null,
     val matrix: FloatArray? = null,
     val mesh: Int? = null,
+    val rotation: FloatArray? = null,
+    val scale: FloatArray? = null,
     val translation: FloatArray? = null
 ) {
     init {
         children?.let { requireNotEmpty(it, "children") }
         matrix?.let { requireSize(it, 16, "matrix") }
+        rotation?.let { requireSize(it, 4, "rotation") }
+        scale?.let { requireSize(it, 3, "scale") }
         translation?.let { requireSize(it, 3, "translation") }
+        require(matrix == null || rotation == null) { "Rotation and matrix cannot be defined at the same time" }
+        require(matrix == null || scale == null) { "Scale and matrix cannot be defined at the same time" }
         require(matrix == null || translation == null) { "Translation and matrix cannot be defined at the same time" }
-    }
-
-    companion object {
-        val default = Node(
-            matrix = floatArrayOf(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
-        )
     }
 
     override fun equals(other: Any?): Boolean {
