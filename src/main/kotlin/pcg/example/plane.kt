@@ -82,5 +82,5 @@ fun main() {
             material()
         }
     }
-    writeToFile("TestPlane.gltf", compile(s, CompileOptions(interleaved = true)))
+    writeToFile("TestPlane.gltf", s.compile(CompileOptions(interleaved = true)))
 }

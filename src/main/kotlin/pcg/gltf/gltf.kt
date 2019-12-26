@@ -214,24 +214,27 @@ data class Node(
     val children: List<Int>? = null,
     val matrix: FloatArray? = null,
     val mesh: Int? = null,
+    val rotation: FloatArray? = null,
+    val scale: FloatArray? = null,
     val translation: FloatArray? = null
 ) {
     init {
         children?.let { requireNotEmpty(it, "children") }
         matrix?.let { requireSize(it, 16, "matrix") }
+        rotation?.let { requireSize(it, 4, "rotation") }
+        rotation?.let { require(it.all { e -> e in -1f..1f }) { "Each element in the array must be greater than or equal to -1 and less than or equal to 1" } }
+        scale?.let { requireSize(it, 3, "scale") }
         translation?.let { requireSize(it, 3, "translation") }
+        require(matrix == null || rotation == null) { "Rotation and matrix cannot be defined at the same time" }
+        require(matrix == null || scale == null) { "Scale and matrix cannot be defined at the same time" }
         require(matrix == null || translation == null) { "Translation and matrix cannot be defined at the same time" }
-    }
-
-    companion object {
-        val default = Node(
-            matrix = floatArrayOf(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
-        )
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is Node) return false
+        if (javaClass != other?.javaClass) return false
+
+        other as Node
 
         if (children != other.children) return false
         if (matrix != null) {
@@ -239,6 +242,14 @@ data class Node(
             if (!matrix.contentEquals(other.matrix)) return false
         } else if (other.matrix != null) return false
         if (mesh != other.mesh) return false
+        if (rotation != null) {
+            if (other.rotation == null) return false
+            if (!rotation.contentEquals(other.rotation)) return false
+        } else if (other.rotation != null) return false
+        if (scale != null) {
+            if (other.scale == null) return false
+            if (!scale.contentEquals(other.scale)) return false
+        } else if (other.scale != null) return false
         if (translation != null) {
             if (other.translation == null) return false
             if (!translation.contentEquals(other.translation)) return false
@@ -251,8 +262,18 @@ data class Node(
         var result = children?.hashCode() ?: 0
         result = 31 * result + (matrix?.contentHashCode() ?: 0)
         result = 31 * result + (mesh ?: 0)
+        result = 31 * result + (rotation?.contentHashCode() ?: 0)
+        result = 31 * result + (scale?.contentHashCode() ?: 0)
         result = 31 * result + (translation?.contentHashCode() ?: 0)
         return result
+    }
+
+    companion object {
+
+        val defaultMatrix = floatArrayOf(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
+        val defaultScale = floatArrayOf(1f, 1f, 1f)
+        val defaultRotation = floatArrayOf(0f, 0f, 0f, 1f)
+        val defaultTranslation = floatArrayOf(0f, 0f, 0f)
     }
 }
 
@@ -368,17 +389,17 @@ data class Texture(
 )
 
 fun Gltf.toJson(prettyPrinting: Boolean = false): String {
-    val builder = GsonBuilder()
-    builder.disableHtmlEscaping()
-    if (prettyPrinting) {
-        builder.setPrettyPrinting()
-    }
-    builder.registerTypeAdapter(Mode::class.java, Mode.serializer)
-    builder.registerTypeAdapter(ComponentType::class.java, ComponentType.serializer)
-    builder.registerTypeAdapter(BufferTarget::class.java, BufferTarget.serializer)
-    builder.registerTypeAdapter(Filter::class.java, Filter.serializer)
-    builder.registerTypeAdapter(Wrap::class.java, Wrap.serializer)
-    val gson = builder.create()
+    val gson = GsonBuilder().apply {
+        disableHtmlEscaping()
+        if (prettyPrinting) {
+            setPrettyPrinting()
+        }
+        registerTypeAdapter(Mode::class.java, Mode.serializer)
+        registerTypeAdapter(ComponentType::class.java, ComponentType.serializer)
+        registerTypeAdapter(BufferTarget::class.java, BufferTarget.serializer)
+        registerTypeAdapter(Filter::class.java, Filter.serializer)
+        registerTypeAdapter(Wrap::class.java, Wrap.serializer)
+    }.create()
     return gson.toJson(this)
 }
 
