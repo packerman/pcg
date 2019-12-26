@@ -1,6 +1,6 @@
 package pcg.compile
 
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import pcg.common.Attribute.POSITION
 import pcg.common.BufferTarget.ARRAY_BUFFER
@@ -26,10 +26,12 @@ internal class SceneGraphTest {
         val s = scene {
             node(g) {
                 node {
+                    translate(0.6f, 0f, 0f)
                     node(g)
                 }
             }
             node {
+                translate(0f, 0.6f, 0f)
                 node(g)
             }
         }
@@ -39,11 +41,28 @@ internal class SceneGraphTest {
         val expected = Gltf(
             scenes = listOf(
                 Scene(
-                    nodes = listOf(0)
+                    nodes = listOf(0, 3)
                 )
             ),
             nodes = listOf(
-                Node(mesh = 0)
+                Node(
+                    mesh = 0,
+                    children = listOf(1)
+                ),
+                Node(
+                    children = listOf(2),
+                    translation = floatArrayOf(0.6f, 0f, 0f)
+                ),
+                Node(
+                    mesh = 0
+                ),
+                Node(
+                    children = listOf(4),
+                    translation = floatArrayOf(0f, 0.6f, 0f)
+                ),
+                Node(
+                    mesh = 0
+                )
             ),
             meshes = listOf(
                 Mesh(
@@ -81,7 +100,7 @@ internal class SceneGraphTest {
             )
         )
 
-        Assertions.assertEquals(expected, gltf)
+        assertEquals(expected, gltf)
 
         SceneKtTest.writeToFile("TestCompileGraphScene.gltf", gltf)
     }

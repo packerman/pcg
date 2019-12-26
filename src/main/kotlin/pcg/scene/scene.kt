@@ -129,8 +129,9 @@ class GeometryNode(
     val geometry: Geometry,
     val materials: Map<Int, Material>,
     transforms: List<Transform>,
-    nodes: List<Node>
-) : Node(transforms, nodes) {
+    nodes: List<Node>,
+    name: String?
+) : Node(transforms, name, nodes) {
 
     init {
         for (mesh in geometry.meshes) {
@@ -191,7 +192,7 @@ class GeometryNode(
                 )
             )
 
-            override fun build(): Node = GeometryNode(geometry, materials, transforms, nodes)
+            override fun build(): Node = GeometryNode(geometry, materials, transforms, nodes, name)
         }
     }
 }
@@ -212,11 +213,7 @@ data class Material(
     val opacityTexture: Texture? = null,
     val transparencyTexture: Texture? = null,
     val normalTexture: Texture? = null
-) {
-    companion object {
-        val default = Material()
-    }
-}
+)
 
 enum class Attribute {
     Position,
@@ -304,8 +301,8 @@ open class NodeContainer(val nodes: List<Node>) {
 
 fun NodeContainer.collectNodes(): List<Node> {
     fun MutableList<Node>.collectNodes(container: NodeContainer): MutableList<Node> {
-        addAll(container.nodes)
         container.nodes.forEach { node ->
+            add(node)
             collectNodes(node)
         }
         return this
@@ -313,11 +310,13 @@ fun NodeContainer.collectNodes(): List<Node> {
     return mutableListOf<Node>().collectNodes(this)
 }
 
-open class Node(val transforms: List<Transform>, nodes: List<Node>) : NodeContainer(nodes) {
+open class Node(val transforms: List<Transform>, val name: String? = null, nodes: List<Node>) : NodeContainer(nodes) {
 
     companion object {
 
         open class NodeBuilder : NodeContainerBuilder() {
+
+            var name: String? = null
 
             protected val transforms = mutableListOf<Transform>()
 
@@ -325,7 +324,7 @@ open class Node(val transforms: List<Transform>, nodes: List<Node>) : NodeContai
                 transforms.add(Translation(dx, dy, dz))
             }
 
-            override fun build() = Node(transforms, nodes)
+            override fun build() = Node(transforms, name, nodes)
         }
     }
 }
@@ -334,13 +333,17 @@ fun scene(block: SceneBuilder.() -> Unit): Scene = SceneBuilder().apply(block).b
 
 class Scene(nodes: List<Node>) : NodeContainer(nodes) {
 
+    val rootNodes = nodes
+
+    val allNodes = collectNodes()
+
     val geometries: Set<Geometry>
-        get() = nodes.mapNotNull { n -> n as? GeometryNode }
+        get() = allNodes.mapNotNull { n -> n as? GeometryNode }
             .map { it.geometry }
             .toSet()
 
     val materials: Set<Material>
-        get() = nodes.mapNotNull { it as? GeometryNode }
+        get() = allNodes.mapNotNull { it as? GeometryNode }
             .flatMap { it.materials.values }
             .toSet()
 
