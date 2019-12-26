@@ -1,5 +1,6 @@
 package pcg.compile
 
+import org.joml.Matrix4f
 import pcg.compile.MeshCompiler.Companion.compileGeometries
 import pcg.gltf.Gltf
 import pcg.gltf.Primitive
@@ -7,6 +8,7 @@ import pcg.scene.*
 import pcg.util.emptyToNull
 import pcg.util.indexElements
 import pcg.util.indexUniqueElements
+import pcg.util.nullIfDefault
 import pcg.gltf.Material as GltfMaterial
 import pcg.gltf.Mesh as GltfMesh
 import pcg.gltf.Node as GltfNode
@@ -32,18 +34,7 @@ class SceneCompiler(options: CompileOptions, private val scene: Scene) {
                 ) else null,
             materials = if (materialIndex.isEmpty()) null else materialIndex.keys.toList(),
             meshes = meshIndex.keys.toList().emptyToNull(),
-            nodes = scene.allNodes.map { node ->
-                check(node.transforms.size <= 1) { "Only one transform is supported so far (Constraint to be removed)" }
-                GltfNode(
-                    mesh = meshByNode[node]?.let { meshIndex.getValue(it) },
-                    translation = node.transforms.firstOrNull()?.let { transform ->
-                        (transform as? Translation)?.let { translation ->
-                            floatArrayOf(translation.dx, translation.dy, transform.dz)
-                        }
-                    },
-                    children = node.nodes.map { nodesIndex.getValue(it) }.emptyToNull()
-                )
-            }.emptyToNull(),
+            nodes = scene.allNodes.map(this::compileNode).emptyToNull(),
             accessors = compiledGeometries.values.flatMap(GeometryCompiler::accessors).emptyToNull(),
             bufferViews = compiledGeometries.values.flatMap { it.bufferViews }.emptyToNull(),
             buffers = compiledGeometries.values.map(GeometryCompiler::buffer).emptyToNull(),
@@ -55,6 +46,28 @@ class SceneCompiler(options: CompileOptions, private val scene: Scene) {
             }.emptyToNull(),
             images = compiledTextures.values.map(TextureCompiler::image).emptyToNull(),
             samplers = samplerIndex.keys.toList().emptyToNull()
+        )
+    }
+
+    private fun compileNode(node: Node): GltfNode {
+        val transform = Matrix4f().apply {
+            node.transforms
+                .forEach { t ->
+                    t.applyInPlace(this)
+                }
+        }
+        val isTRS = node.transforms.isTRSTransform()
+        val translation = if (isTRS) FloatArrays.forTranslation(transform) else null
+        val rotation = if (isTRS) FloatArrays.forRotation(transform) else null
+        val scale = if (isTRS) FloatArrays.forScale(transform) else null
+        val matrix = if (!isTRS) FloatArrays.forMatrix(transform) else null
+        return GltfNode(
+            mesh = meshByNode[node]?.let { meshIndex.getValue(it) },
+            translation = nullIfDefault(translation, GltfNode.defaultTranslation),
+            rotation = nullIfDefault(rotation, GltfNode.defaultRotation),
+            scale = nullIfDefault(scale, GltfNode.defaultScale),
+            matrix = nullIfDefault(matrix, GltfNode.defaultMatrix),
+            children = node.nodes.map { nodesIndex.getValue(it) }.emptyToNull()
         )
     }
 

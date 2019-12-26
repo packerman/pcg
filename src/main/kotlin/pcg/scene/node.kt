@@ -1,5 +1,10 @@
 package pcg.scene
 
+import org.joml.Vector3fc
+import pcg.scene.GeometryNode.Companion.GeometryNodeBuilder
+import pcg.scene.Node.Companion.NodeBuilder
+import pcg.scene.NodeContainer.Companion.NodeContainerBuilder
+
 open class NodeContainer(val nodes: List<Node>) {
 
     companion object {
@@ -8,12 +13,12 @@ open class NodeContainer(val nodes: List<Node>) {
 
             protected val nodes = mutableListOf<Node>()
 
-            fun node(geometry: Geometry, block: GeometryNode.Companion.GeometryNodeBuilder.() -> Unit = {}) {
-                nodes.add(GeometryNode.Companion.GeometryNodeBuilder(geometry).apply(block).build())
+            fun node(geometry: Geometry, block: GeometryNodeBuilder.() -> Unit = {}) {
+                nodes.add(GeometryNodeBuilder(geometry).apply(block).build())
             }
 
-            fun node(block: Node.Companion.NodeBuilder.() -> Unit = {}) {
-                nodes.add(Node.Companion.NodeBuilder().apply(block).build())
+            fun node(block: NodeBuilder.() -> Unit = {}) {
+                nodes.add(NodeBuilder().apply(block).build())
             }
 
             override fun build(): NodeContainer {
@@ -38,7 +43,7 @@ open class Node(val transforms: List<Transform>, val name: String? = null, nodes
 
     companion object {
 
-        open class NodeBuilder : NodeContainer.Companion.NodeContainerBuilder() {
+        open class NodeBuilder : NodeContainerBuilder() {
 
             var name: String? = null
 
@@ -46,6 +51,14 @@ open class Node(val transforms: List<Transform>, val name: String? = null, nodes
 
             fun translate(dx: Float, dy: Float, dz: Float) {
                 transforms.add(Translation(dx, dy, dz))
+            }
+
+            fun rotate(angleInDegrees: Float, axis: Vector3fc) {
+                transforms.add(Rotation(angleInDegrees, axis))
+            }
+
+            fun scale(sx: Float, sy: Float, sz: Float) {
+                transforms.add(Scale(sx, sy, sz))
             }
 
             override fun build() = Node(transforms, name, nodes)
@@ -73,7 +86,7 @@ class GeometryNode(
 
     companion object {
 
-        class GeometryNodeBuilder(private val geometry: Geometry) : Node.Companion.NodeBuilder() {
+        class GeometryNodeBuilder(private val geometry: Geometry) : NodeBuilder() {
 
             private val materials = mutableMapOf<Int, Material>()
 

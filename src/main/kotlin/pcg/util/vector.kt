@@ -22,11 +22,9 @@ operator fun Vector3f.plusAssign(other: Vector3fc) {
 
 object Vector {
 
-    fun add(vararg vectors: Vector3fc): Vector3fc {
-        val result = Vector3f()
-        vectors.forEach {
-            result += it
+    fun add(vararg vectors: Vector3fc): Vector3fc = Vector3f().apply {
+        vectors.forEach { v ->
+            this += v
         }
-        return result
     }
 }

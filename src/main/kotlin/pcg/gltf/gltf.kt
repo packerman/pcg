@@ -222,6 +222,7 @@ data class Node(
         children?.let { requireNotEmpty(it, "children") }
         matrix?.let { requireSize(it, 16, "matrix") }
         rotation?.let { requireSize(it, 4, "rotation") }
+        rotation?.let { require(it.all { e -> e in -1f..1f }) { "Each element in the array must be greater than or equal to -1 and less than or equal to 1" } }
         scale?.let { requireSize(it, 3, "scale") }
         translation?.let { requireSize(it, 3, "translation") }
         require(matrix == null || rotation == null) { "Rotation and matrix cannot be defined at the same time" }
@@ -231,7 +232,9 @@ data class Node(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is Node) return false
+        if (javaClass != other?.javaClass) return false
+
+        other as Node
 
         if (children != other.children) return false
         if (matrix != null) {
@@ -239,6 +242,14 @@ data class Node(
             if (!matrix.contentEquals(other.matrix)) return false
         } else if (other.matrix != null) return false
         if (mesh != other.mesh) return false
+        if (rotation != null) {
+            if (other.rotation == null) return false
+            if (!rotation.contentEquals(other.rotation)) return false
+        } else if (other.rotation != null) return false
+        if (scale != null) {
+            if (other.scale == null) return false
+            if (!scale.contentEquals(other.scale)) return false
+        } else if (other.scale != null) return false
         if (translation != null) {
             if (other.translation == null) return false
             if (!translation.contentEquals(other.translation)) return false
@@ -251,8 +262,18 @@ data class Node(
         var result = children?.hashCode() ?: 0
         result = 31 * result + (matrix?.contentHashCode() ?: 0)
         result = 31 * result + (mesh ?: 0)
+        result = 31 * result + (rotation?.contentHashCode() ?: 0)
+        result = 31 * result + (scale?.contentHashCode() ?: 0)
         result = 31 * result + (translation?.contentHashCode() ?: 0)
         return result
+    }
+
+    companion object {
+
+        val defaultMatrix = floatArrayOf(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
+        val defaultScale = floatArrayOf(1f, 1f, 1f)
+        val defaultRotation = floatArrayOf(0f, 0f, 0f, 1f)
+        val defaultTranslation = floatArrayOf(0f, 0f, 0f)
     }
 }
 
