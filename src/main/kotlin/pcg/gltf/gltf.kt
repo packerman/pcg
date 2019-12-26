@@ -368,17 +368,17 @@ data class Texture(
 )
 
 fun Gltf.toJson(prettyPrinting: Boolean = false): String {
-    val builder = GsonBuilder()
-    builder.disableHtmlEscaping()
-    if (prettyPrinting) {
-        builder.setPrettyPrinting()
-    }
-    builder.registerTypeAdapter(Mode::class.java, Mode.serializer)
-    builder.registerTypeAdapter(ComponentType::class.java, ComponentType.serializer)
-    builder.registerTypeAdapter(BufferTarget::class.java, BufferTarget.serializer)
-    builder.registerTypeAdapter(Filter::class.java, Filter.serializer)
-    builder.registerTypeAdapter(Wrap::class.java, Wrap.serializer)
-    val gson = builder.create()
+    val gson = GsonBuilder().apply {
+        disableHtmlEscaping()
+        if (prettyPrinting) {
+            setPrettyPrinting()
+        }
+        registerTypeAdapter(Mode::class.java, Mode.serializer)
+        registerTypeAdapter(ComponentType::class.java, ComponentType.serializer)
+        registerTypeAdapter(BufferTarget::class.java, BufferTarget.serializer)
+        registerTypeAdapter(Filter::class.java, Filter.serializer)
+        registerTypeAdapter(Wrap::class.java, Wrap.serializer)
+    }.create()
     return gson.toJson(this)
 }
 
