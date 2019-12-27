@@ -15,7 +15,7 @@ fun main() {
     val standardMaterial = Material()
     val stairsLength = 5f
     val stairsWidth = 4f
-    val thickness = 0.5f
+    val thickness = 1f
     val floorWidth = 50f
     val floorLength = 50f
     val myStairs = stairs2(levelHeight, stairsLength, stairsWidth, thickness, 6)
@@ -62,11 +62,11 @@ fun main() {
                     }
                     node(column) {
                         material(standardMaterial)
-                        translate(0f, 0f, -floorLength - thickness)
+                        translate(0f, 0f, -floorLength + thickness)
                     }
                     node(column) {
                         material(standardMaterial)
-                        translate(floorWidth - thickness, 0f, -floorLength - thickness)
+                        translate(floorWidth - thickness, 0f, -floorLength + thickness)
                     }
                 }
                 translate((planeWidth - floorWidth) / 2, 0f, -(planeLength - floorLength) / 2)
