@@ -15,14 +15,18 @@ fun main() {
     val planeWidth = 100f
     val planeLength = 100f
     val stairsLength = 6f
-    val stairsWidth = 4f
+    val stairsWidth = 6f
     val thickness = 1f
     val floorWidth = 30f
     val floorLength = 30f
+    val windowMargin = 2f
     val uLength = stairsWidth / floorWidth
-    val vLength = stairsLength / floorLength
+    val vLength = (stairsLength + windowMargin) / floorLength
     val uMin = 0.2f
-    val vMin = 0.6f
+    val vMin = 0.5f
+    val barrierWidth = stairsWidth + 2f
+    val barrierLength = 0.25f
+    val vMargin = windowMargin / floorLength
     val floorMaterial = Material(name = "floor", diffuse = Color(128, 128, 0))
     val stairsMaterial = Material(name = "stairs", diffuse = Color(189, 183, 107))
     val groundMaterial = Material(name = "ground", twoSided = true, diffuse = Color(152, 251, 152))
@@ -59,6 +63,12 @@ fun main() {
         Vector3f(thickness, 0f, 0f),
         Vector3f(0f, levelHeight, 0f),
         Vector3f(0f, 0f, -thickness)
+    )
+    val barrier = box(
+        Point3f(0f, 0f, 0f),
+        Vector3f(barrierWidth, 0f, 0f),
+        Vector3f(0f, 3f, 0f),
+        Vector3f(0f, 0f, -barrierLength)
     )
 
     fun placeColumns(builder: NodeBuilder) = with(builder) {
@@ -124,7 +134,7 @@ fun main() {
                         placeBoxes(this, 0.75f to 0.25f)
                         node(myStairs) {
                             name = "stairs,level1"
-                            translate(uMin * floorWidth, 0f, -vMin * floorLength)
+                            translate(uMin * floorWidth, 0f, -(vMin + vMargin) * floorLength)
                             material(stairsMaterial)
                         }
                     }
@@ -139,7 +149,16 @@ fun main() {
                     node {
                         translate(0f, thickness, 0f)
                         placeBoxes(this, 0.75f to 0.75f)
+                        node(barrier) {
+                            translate(
+                                uMin * floorWidth - (barrierWidth - stairsWidth) / 2f,
+                                0f,
+                                -floorLength + barrierLength
+                            )
+                            material(stairsMaterial)
+                        }
                     }
+
                 }
             }
         }
