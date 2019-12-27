@@ -67,7 +67,8 @@ class SceneCompiler(options: CompileOptions, private val scene: Scene) {
             rotation = nullIfDefault(rotation, GltfNode.defaultRotation),
             scale = nullIfDefault(scale, GltfNode.defaultScale),
             matrix = nullIfDefault(matrix, GltfNode.defaultMatrix),
-            children = node.nodes.map { nodesIndex.getValue(it) }.emptyToNull()
+            children = node.nodes.map { nodesIndex.getValue(it) }.emptyToNull(),
+            name = node.name
         )
     }
 
