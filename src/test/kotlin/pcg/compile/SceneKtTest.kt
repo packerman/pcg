@@ -42,6 +42,7 @@ internal class SceneKtTest {
         val m = Material()
         val s = scene {
             node(geometry = g) {
+                name = "Triangle"
                 material(m)
             }
         }
@@ -58,6 +59,7 @@ internal class SceneKtTest {
             ),
             nodes = listOf(
                 Node(
+                    name = "Triangle",
                     mesh = 0
                 )
             ),

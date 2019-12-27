@@ -135,7 +135,7 @@ fun main() {
             material(twoSided = false)
         }
         node(
-            planeGeometry(75f, 75f)
+            simplePlane(75f, 75f)
         ) {
             material(
                 twoSided = true

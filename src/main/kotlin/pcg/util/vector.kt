@@ -20,6 +20,8 @@ operator fun Vector3f.plusAssign(other: Vector3fc) {
     add(other)
 }
 
+operator fun Vector3fc.times(factor: Float): Vector3fc = mul(factor, Vector3f())
+
 object Vector {
 
     fun add(vararg vectors: Vector3fc): Vector3fc = Vector3f().apply {

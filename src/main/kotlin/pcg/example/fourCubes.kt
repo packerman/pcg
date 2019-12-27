@@ -90,7 +90,7 @@ private val cubeGeometry =
         }
     }
 
-internal fun planeGeometry(width: Float, length: Float): Geometry {
+internal fun simplePlane(width: Float, length: Float): Geometry {
     val ha = width / 2
     val hb = length / 2
     return oneMeshGeometry {
@@ -132,7 +132,7 @@ fun main() {
             translate(1.5f, 0f, -1.5f)
         }
         node(
-            planeGeometry(6f, 6f)
+            simplePlane(6f, 6f)
         ) {
             material(
                     diffuse = Color(0.5f, 0.5f, 0.5f),

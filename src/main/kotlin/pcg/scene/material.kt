@@ -1,6 +1,24 @@
 package pcg.scene
 
-data class Color(val red: Float, val green: Float, val blue: Float, val alpha: Float = 1f)
+data class Color(val red: Float, val green: Float, val blue: Float, val alpha: Float = 1f) {
+
+    init {
+        require(red in 0f..1f)
+        require(green in 0f..1f)
+        require(blue in 0f..1f)
+        require(alpha in 0f..1f)
+    }
+
+    constructor(red: Int, green: Int, blue: Int, alpha: Int = 255) : this(
+        red.toFloat() / 255f,
+        green.toFloat() / 255f,
+        blue.toFloat() / 255f,
+        alpha.toFloat() / 255f
+    )
+}
+
+operator fun Color.times(factor: Float) =
+    Color(red * factor, green * factor, blue * factor, alpha)
 
 class Texture(val fileName: String)
 

@@ -216,7 +216,8 @@ data class Node(
     val mesh: Int? = null,
     val rotation: FloatArray? = null,
     val scale: FloatArray? = null,
-    val translation: FloatArray? = null
+    val translation: FloatArray? = null,
+    val name: String? = null
 ) {
     init {
         children?.let { requireNotEmpty(it, "children") }
@@ -254,6 +255,7 @@ data class Node(
             if (other.translation == null) return false
             if (!translation.contentEquals(other.translation)) return false
         } else if (other.translation != null) return false
+        if (name != other.name) return false
 
         return true
     }
@@ -265,6 +267,7 @@ data class Node(
         result = 31 * result + (rotation?.contentHashCode() ?: 0)
         result = 31 * result + (scale?.contentHashCode() ?: 0)
         result = 31 * result + (translation?.contentHashCode() ?: 0)
+        result = 31 * result + (name?.hashCode() ?: 0)
         return result
     }
 
