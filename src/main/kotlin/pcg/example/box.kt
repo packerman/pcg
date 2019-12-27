@@ -30,7 +30,10 @@ class Box(
     private val bottomWall: Plane? = if (bottom) Plane(o + c, a, -c, m, p) else null
 
     private val walls: List<Plane> =
-        sequenceOf(frontWall, rightWall, backWall, leftWall, topWall, bottomWall).filterNotNull().toList()
+        sequenceOf(frontWall, rightWall, backWall, leftWall, topWall, bottomWall)
+            .filterNotNull().toList()
+
+    val vertexCount = walls.sumBy(Plane::vertexCount)
 
     fun provideVertices(builder: Float3VertexArrayBuilder): Unit = with(builder) {
         walls.forEach { wall ->
@@ -68,6 +71,55 @@ fun box(
         }
         indexArray {
             box.provideIndices(this)
+        }
+    }
+}
+
+fun boxWithWindow(
+    o: Point3fc, a: Vector3fc, b: Vector3fc, c: Vector3fc,
+    uMin: Float, uMax: Float,
+    vMin: Float, vMax: Float
+): Geometry {
+    require(uMin in 0f..1f)
+    require(uMax in 0f..1f)
+    require(vMin in 0f..1f)
+    require(vMax in 0f..1f)
+    require(uMin < uMax)
+    require(vMin < vMax)
+
+    val leftBox = Box(o, a * uMin, b, c, right = false)
+    val rightBox = Box(o + a * uMax, a * (1f - uMax), b, c, left = false)
+    val bottomBox = Box(o + a * uMin, a * (uMax - uMin), b, c * vMin, back = false)
+    val topBox = Box(o + a * uMin + c * vMax, a * (uMax - uMin), b, c * (1 - vMax), front = false)
+    val boxes = listOf(leftBox, rightBox, bottomBox, topBox)
+
+    val leftPlane = Plane(o + a * uMin + c * vMin, c * (vMax - vMin), b)
+    val rightPlane = Plane(o + a * uMax + c * vMax, c * (vMin - vMax), b)
+    val bottomPlane = Plane(o + a * uMax + c * uMin, a * (uMin - uMax), b)
+    val topPlane = Plane(o + a * uMin + c * uMax, a * (uMax - uMin), b)
+    val planes = listOf(leftPlane, rightPlane, bottomPlane, topPlane)
+
+    return oneMeshGeometry {
+        vertexArray3f(attribute = Position) {
+            boxes.forEach { it.provideVertices(this) }
+            planes.forEach { it.provideVertices(this) }
+        }
+
+        vertexArray3f(attribute = Normal) {
+            boxes.forEach { it.provideNormals(this) }
+            planes.forEach { it.provideNormals(this) }
+        }
+
+        indexArray {
+            var localOffset = 0
+            boxes.forEach {
+                it.provideIndices(this, localOffset)
+                localOffset += it.vertexCount
+            }
+            planes.forEach {
+                it.provideIndices(this, localOffset)
+                localOffset += it.vertexCount
+            }
         }
     }
 }
