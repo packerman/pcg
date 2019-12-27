@@ -17,6 +17,9 @@ data class Color(val red: Float, val green: Float, val blue: Float, val alpha: F
     )
 }
 
+operator fun Color.times(factor: Float) =
+    Color(red * factor, green * factor, blue * factor, alpha)
+
 class Texture(val fileName: String)
 
 data class Material(

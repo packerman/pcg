@@ -11,25 +11,34 @@ import pcg.scene.scene
 import pcg.util.Point3f
 
 fun main() {
-    val levelHeight = 5f
-    val planeWidth = 70f
-    val planeLength = 70f
-    val standardMaterial = Material()
-    val stairsLength = 5f
+    val levelHeight = 6f
+    val planeWidth = 100f
+    val planeLength = 100f
+    val stairsLength = 6f
     val stairsWidth = 4f
     val thickness = 1f
-    val floorWidth = 50f
-    val floorLength = 50f
+    val floorWidth = 30f
+    val floorLength = 30f
     val uLength = stairsWidth / floorWidth
     val vLength = stairsLength / floorLength
-    val uMin = 0.25f
-    val vMin = 0.75f
-    val floorMaterial = Material(diffuse = Color(154, 205, 50))
+    val uMin = 0.2f
+    val vMin = 0.6f
+    val floorMaterial = Material(name = "floor", diffuse = Color(128, 128, 0))
+    val stairsMaterial = Material(name = "stairs", diffuse = Color(189, 183, 107))
+    val groundMaterial = Material(name = "ground", twoSided = true, diffuse = Color(152, 251, 152))
+    val columnMaterial = Material(name = "column", diffuse = Color(85, 107, 47))
+    val boxMaterial = Material(name = "box", diffuse = Color(139, 69, 19))
     val myStairs = stairs2(levelHeight, stairsLength, stairsWidth, thickness, 6)
     val ground = plane(
         Point3f(0f, 0f, 0f),
         Vector3f(planeWidth, 0f, 0f),
         Vector3f(0f, 0f, -planeLength)
+    )
+    val myBox = box(
+        Point3f(0f, 0f, 0f),
+        Vector3f(3f, 0f, 0f),
+        Vector3f(0f, 3f, 0f),
+        Vector3f(0f, 0f, -3f)
     )
     val floor = box(
         Point3f(0f, 0f, 0f),
@@ -54,26 +63,35 @@ fun main() {
 
     fun placeColumns(builder: NodeBuilder) = with(builder) {
         node(column) {
-            material(standardMaterial)
+            material(columnMaterial)
         }
         node(column) {
-            material(standardMaterial)
+            material(columnMaterial)
             translate(floorWidth - thickness, 0f, 0f)
         }
         node(column) {
-            material(standardMaterial)
+            material(columnMaterial)
             translate(0f, 0f, -floorLength + thickness)
         }
         node(column) {
-            material(standardMaterial)
+            material(columnMaterial)
             translate(floorWidth - thickness, 0f, -floorLength + thickness)
+        }
+    }
+
+    fun placeBoxes(builder: NodeBuilder, vararg where: Pair<Float, Float>) = with(builder) {
+        for ((u, v) in where) {
+            node(myBox) {
+                translate(floorWidth * u, 0f, -floorLength * v)
+                material(boxMaterial)
+            }
         }
     }
 
     val s = scene {
         node(ground) {
             name = "ground"
-            material(twoSided = true)
+            material(groundMaterial)
 
             node {
                 name = "levels"
@@ -82,23 +100,34 @@ fun main() {
                 node {
                     name = "level0"
                     node(myStairs) {
-                        name = "stair,level0"
+                        name = "stairs,level0"
                         translate((floorWidth - stairsWidth) / 2f, 0f, stairsLength)
-                        material(standardMaterial)
+                        material(stairsMaterial)
                     }
                     node {
                         name = "columns,level0"
                         placeColumns(this)
                     }
+                    placeBoxes(this, 0.3f to 0.6f, 0.8f to 0.7f)
                 }
 
                 node {
                     name = "level1"
                     translate(0f, levelHeight - thickness, 0f)
                     node(floor) {
-                        material(standardMaterial)
+                        name = "floor,level1"
+                        material(floorMaterial)
                     }
                     placeColumns(this)
+                    node {
+                        translate(0f, thickness, 0f)
+                        placeBoxes(this, 0.75f to 0.25f)
+                        node(myStairs) {
+                            name = "stairs,level1"
+                            translate(uMin * floorWidth, 0f, -vMin * floorLength)
+                            material(stairsMaterial)
+                        }
+                    }
                 }
 
                 node {
@@ -106,6 +135,10 @@ fun main() {
                     translate(0f, 2 * levelHeight - thickness, 0f)
                     node(floor2) {
                         material(floorMaterial)
+                    }
+                    node {
+                        translate(0f, thickness, 0f)
+                        placeBoxes(this, 0.75f to 0.75f)
                     }
                 }
             }

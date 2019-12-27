@@ -95,8 +95,8 @@ fun boxWithWindow(
 
     val leftPlane = Plane(o + a * uMin + c * vMin, c * (vMax - vMin), b)
     val rightPlane = Plane(o + a * uMax + c * vMax, c * (vMin - vMax), b)
-    val bottomPlane = Plane(o + a * uMax + c * uMin, a * (uMin - uMax), b)
-    val topPlane = Plane(o + a * uMin + c * uMax, a * (uMax - uMin), b)
+    val bottomPlane = Plane(o + a * uMax + c * vMin, a * (uMin - uMax), b)
+    val topPlane = Plane(o + a * uMin + c * vMax, a * (uMax - uMin), b)
     val planes = listOf(leftPlane, rightPlane, bottomPlane, topPlane)
 
     return oneMeshGeometry {
