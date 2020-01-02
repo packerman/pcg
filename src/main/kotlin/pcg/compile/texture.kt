@@ -11,9 +11,12 @@ import java.util.*
 
 class TextureCompiler(private val texture: Texture) {
 
+    val type =
+        requireNotNull(extToType[getExtension(texture.fileName)]) { "Unknown extension: " + getExtension(texture.fileName) }
+
     val image = Image(
         uri = "data:" +
-                requireNotNull(extToType[getExtension(texture.fileName)]) { "Unknown extension: " + getExtension(texture.fileName) } +
+                type +
                 ";base64," +
                 encoder.encodeToString(readBytesResource(texture.fileName))
     )

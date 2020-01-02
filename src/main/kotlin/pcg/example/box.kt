@@ -5,8 +5,8 @@ import org.joml.Vector3fc
 import pcg.compile.CompileOptions
 import pcg.compile.compile
 import pcg.gltf.writeToFile
-import pcg.scene.Attribute.Normal
-import pcg.scene.Attribute.Position
+import pcg.scene.Attribute.*
+import pcg.scene.Float2VertexArray
 import pcg.scene.Float3VertexArray.Companion.Float3VertexArrayBuilder
 import pcg.scene.Geometry
 import pcg.scene.ShortIndexArray.Companion.ShortIndexArrayBuilder
@@ -19,15 +19,16 @@ class Box(
     m: Int = 1, n: Int = 1, p: Int = 1,
     front: Boolean = true, back: Boolean = true,
     left: Boolean = true, right: Boolean = true,
-    top: Boolean = true, bottom: Boolean = true
+    top: Boolean = true, bottom: Boolean = true,
+    texture: Boolean = true
 ) {
 
-    private val frontWall: Plane? = if (front) Plane(o, a, b, m, n) else null
-    private val rightWall: Plane? = if (right) Plane(o + a, c, b, p, n) else null
-    private val backWall: Plane? = if (back) Plane(Vector.add(o, a, c), -a, b, m, n) else null
-    private val leftWall: Plane? = if (left) Plane(o + c, -c, b, p, n) else null
-    private val topWall: Plane? = if (top) Plane(o + b, a, c, m, p) else null
-    private val bottomWall: Plane? = if (bottom) Plane(o + c, a, -c, m, p) else null
+    private val frontWall: Plane? = if (front) Plane(o, a, b, m, n, texture) else null
+    private val rightWall: Plane? = if (right) Plane(o + a, c, b, p, n, texture) else null
+    private val backWall: Plane? = if (back) Plane(Vector.add(o, a, c), -a, b, m, n, texture) else null
+    private val leftWall: Plane? = if (left) Plane(o + c, -c, b, p, n, texture) else null
+    private val topWall: Plane? = if (top) Plane(o + b, a, c, m, p, texture) else null
+    private val bottomWall: Plane? = if (bottom) Plane(o + c, a, -c, m, p, texture) else null
 
     private val walls: List<Plane> =
         sequenceOf(frontWall, rightWall, backWall, leftWall, topWall, bottomWall)
@@ -38,6 +39,12 @@ class Box(
     fun provideVertices(builder: Float3VertexArrayBuilder): Unit = with(builder) {
         walls.forEach { wall ->
             wall.provideVertices(this)
+        }
+    }
+
+    fun provideTextures(builder: Float2VertexArray.Companion.Float2VertexArrayBuilder) = with(builder) {
+        walls.forEach { wall ->
+            wall.provideTextures(this)
         }
     }
 
@@ -58,13 +65,17 @@ class Box(
 
 fun box(
     o: Point3fc, a: Vector3fc, b: Vector3fc, c: Vector3fc,
-    m: Int = 1, n: Int = 1, p: Int = 1
+    m: Int = 1, n: Int = 1, p: Int = 1,
+    texture: Boolean = true
 ): Geometry {
-    val box = Box(o, a, b, c, m, n, p)
+    val box = Box(o, a, b, c, m, n, p, texture = texture)
 
     return oneMeshGeometry {
         vertexArray3f(attribute = Position) {
             box.provideVertices(this)
+        }
+        vertexArray2f(attribute = TexCoord) {
+            box.provideTextures(this)
         }
         vertexArray3f(attribute = Normal) {
             box.provideNormals(this)
@@ -93,10 +104,10 @@ fun boxWithWindow(
     val topBox = Box(o + a * uMin + c * vMax, a * (uMax - uMin), b, c * (1 - vMax), front = false)
     val boxes = listOf(leftBox, rightBox, bottomBox, topBox)
 
-    val leftPlane = Plane(o + a * uMin + c * vMin, c * (vMax - vMin), b)
-    val rightPlane = Plane(o + a * uMax + c * vMax, c * (vMin - vMax), b)
-    val bottomPlane = Plane(o + a * uMax + c * vMin, a * (uMin - uMax), b)
-    val topPlane = Plane(o + a * uMin + c * vMax, a * (uMax - uMin), b)
+    val leftPlane = Plane(o + a * uMin + c * vMin, c * (vMax - vMin), b, texture = false)
+    val rightPlane = Plane(o + a * uMax + c * vMax, c * (vMin - vMax), b, texture = false)
+    val bottomPlane = Plane(o + a * uMax + c * vMin, a * (uMin - uMax), b, texture = false)
+    val topPlane = Plane(o + a * uMin + c * vMax, a * (uMax - uMin), b, texture = false)
     val planes = listOf(leftPlane, rightPlane, bottomPlane, topPlane)
 
     return oneMeshGeometry {

@@ -1,10 +1,11 @@
 package pcg.compile
 
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import pcg.gltf.PbrMetallicRoughness
 import pcg.scene.Color
 import pcg.scene.Material
+import pcg.scene.Texture
 import pcg.gltf.Material as GltfMaterial
 
 internal class MaterialKtTest {
@@ -63,5 +64,11 @@ internal class MaterialKtTest {
         )
 
         assertEquals(expected, actual)
+    }
+
+    @Test
+    internal fun shouldMarkHasTexture() {
+        assertTrue(Material(diffuseTexture = Texture("/textures/CesiumLogoFlat.png")).hasTextures())
+        assertFalse(Material(diffuse = Color(100, 200, 100)).hasTextures())
     }
 }

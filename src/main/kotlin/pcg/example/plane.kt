@@ -5,8 +5,8 @@ import org.joml.Vector3fc
 import pcg.compile.CompileOptions
 import pcg.compile.compile
 import pcg.gltf.writeToFile
-import pcg.scene.Attribute.Normal
-import pcg.scene.Attribute.Position
+import pcg.scene.Attribute.*
+import pcg.scene.Float2VertexArray.Companion.Float2VertexArrayBuilder
 import pcg.scene.Float3VertexArray.Companion.Float3VertexArrayBuilder
 import pcg.scene.Geometry
 import pcg.scene.ShortIndexArray.Companion.ShortIndexArrayBuilder
@@ -18,7 +18,8 @@ import pcg.util.Vector
 
 class Plane(
     private val origin: Point3fc, private val axis1: Vector3fc, private val axis2: Vector3fc,
-    private val m: Int = 1, private val n: Int = 1
+    private val m: Int = 1, private val n: Int = 1,
+    private val texture: Boolean = true
 ) {
 
     val vertexCount = (m + 1) * (n + 1)
@@ -30,6 +31,16 @@ class Plane(
         for (i in 0..m) {
             for (j in 0..n) {
                 vertex(Vector.add(origin, steps1[i], steps2[j]))
+            }
+        }
+    }
+
+    fun provideTextures(builder: Float2VertexArrayBuilder) = with(builder) {
+        if (texture) {
+            for (i in 0..m) {
+                for (j in 0..n) {
+                    vertex(i.toFloat(), j.toFloat())
+                }
             }
         }
     }
@@ -53,12 +64,18 @@ class Plane(
 
 fun plane(
     origin: Point3fc, axis1: Vector3fc, axis2: Vector3fc,
-    m: Int = 1, n: Int = 1
+    m: Int = 1, n: Int = 1,
+    texture: Boolean = true
 ): Geometry {
     val plane = Plane(origin, axis1, axis2, m, n)
     return oneMeshGeometry {
         vertexArray3f(attribute = Position) {
             plane.provideVertices(this)
+        }
+        if (texture) {
+            vertexArray2f(attribute = TexCoord) {
+                plane.provideTextures(this)
+            }
         }
         vertexArray3f(attribute = Normal) {
             plane.provideNormals(this)

@@ -38,4 +38,8 @@ data class Material(
     val opacityTexture: Texture? = null,
     val transparencyTexture: Texture? = null,
     val normalTexture: Texture? = null
-)
+) {
+
+    fun hasTextures(): Boolean = diffuseTexture != null || specularTexture != null || specularPowerTexture != null ||
+            emissionTexture != null || opacityTexture != null || transparencyTexture != null || normalTexture != null
+}

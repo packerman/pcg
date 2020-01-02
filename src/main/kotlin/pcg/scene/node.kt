@@ -82,6 +82,11 @@ class GeometryNode(
             )
             { "Node does not have a material or index arrays and materials do not match" }
         }
+        if (materials.values.any(Material::hasTextures)) {
+            for (mesh in geometry.meshes) {
+                require(mesh.vertexArrays.any { it.attribute == Attribute.TexCoord }) { "Material has got texture but vertex array does not have any texture coordinates" }
+            }
+        }
     }
 
     companion object {

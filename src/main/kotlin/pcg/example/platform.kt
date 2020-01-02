@@ -7,6 +7,7 @@ import pcg.gltf.writeToFile
 import pcg.scene.Color
 import pcg.scene.Material
 import pcg.scene.Node.Companion.NodeBuilder
+import pcg.scene.Texture
 import pcg.scene.scene
 import pcg.util.Point3f
 
@@ -29,14 +30,16 @@ fun main() {
     val vMargin = windowMargin / floorLength
     val floorMaterial = Material(name = "floor", diffuse = Color(128, 128, 0))
     val stairsMaterial = Material(name = "stairs", diffuse = Color(189, 183, 107))
-    val groundMaterial = Material(name = "ground", twoSided = true, diffuse = Color(152, 251, 152))
+    val groundMaterial =
+        Material(name = "ground", twoSided = true, diffuseTexture = Texture("/textures/playground/grass.png"))
     val columnMaterial = Material(name = "column", diffuse = Color(85, 107, 47))
-    val boxMaterial = Material(name = "box", diffuse = Color(139, 69, 19))
+    val boxMaterial = Material(name = "box", diffuseTexture = Texture("/textures/playground/crate.png"))
     val myStairs = stairs2(levelHeight, stairsLength, stairsWidth, thickness, 6)
     val ground = plane(
         Point3f(0f, 0f, 0f),
         Vector3f(planeWidth, 0f, 0f),
-        Vector3f(0f, 0f, -planeLength)
+        Vector3f(0f, 0f, -planeLength),
+        m = 25, n = 25
     )
     val myBox = box(
         Point3f(0f, 0f, 0f),
