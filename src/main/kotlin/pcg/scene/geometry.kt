@@ -1,15 +1,21 @@
 package pcg.scene
 
+import pcg.scene.Float2VertexArray.Companion.Float2VertexArrayBuilder
+import pcg.scene.Float3VertexArray.Companion.Float3VertexArrayBuilder
+import pcg.scene.Geometry.Companion.GeometryBuilder
+import pcg.scene.Mesh.Companion.MeshBuilder
+import pcg.scene.Mesh.Companion.Primitive
 import pcg.scene.Mesh.Companion.Primitive.Triangles
+import pcg.scene.ShortIndexArray.Companion.ShortIndexArrayBuilder
 import pcg.util.allTheSame
 import pcg.validate.requireNotEmpty
 
-fun geometry(block: Geometry.Companion.GeometryBuilder.() -> Unit): Geometry =
-    Geometry.Companion.GeometryBuilder().apply(block).build()
+fun geometry(block: GeometryBuilder.() -> Unit): Geometry =
+    GeometryBuilder().apply(block).build()
 
 fun oneMeshGeometry(
-    primitive: Mesh.Companion.Primitive = Triangles,
-    block: Mesh.Companion.MeshBuilder.() -> Unit
+    primitive: Primitive = Triangles,
+    block: MeshBuilder.() -> Unit
 ): Geometry {
     return geometry {
         mesh(primitive, block)
@@ -29,10 +35,10 @@ class Geometry(val meshes: List<Mesh>) : ByteSized {
             private val meshes = mutableListOf<Mesh>()
 
             fun mesh(
-                primitive: Mesh.Companion.Primitive = Triangles,
-                block: Mesh.Companion.MeshBuilder.() -> Unit
+                primitive: Primitive = Triangles,
+                block: MeshBuilder.() -> Unit
             ) {
-                meshes.add(Mesh.Companion.MeshBuilder(primitive).apply(block).build())
+                meshes.add(MeshBuilder(primitive).apply(block).build())
             }
 
             override fun build(): Geometry {
@@ -72,22 +78,22 @@ class Mesh(
 
             fun vertexArray3f(
                 attribute: Attribute,
-                block: Float3VertexArray.Companion.Float3VertexArrayBuilder.() -> Unit
+                block: Float3VertexArrayBuilder.() -> Unit
             ): Float3VertexArray {
-                val array = Float3VertexArray.Companion.Float3VertexArrayBuilder(attribute).apply(block).build()
+                val array = Float3VertexArrayBuilder(attribute).apply(block).build()
                 vertexArrays.add(array)
                 return array
             }
 
             fun vertexArray2f(
                 attribute: Attribute,
-                block: Float2VertexArray.Companion.Float2VertexArrayBuilder.() -> Unit
+                block: Float2VertexArrayBuilder.() -> Unit
             ) {
-                vertexArrays.add(Float2VertexArray.Companion.Float2VertexArrayBuilder(attribute).apply(block).build())
+                vertexArrays.add(Float2VertexArrayBuilder(attribute).apply(block).build())
             }
 
-            fun indexArray(material: Int = 0, block: ShortIndexArray.Companion.ShortIndexArrayBuilder.() -> Unit) {
-                indexArrays.add(ShortIndexArray.Companion.ShortIndexArrayBuilder(material).apply(block).build())
+            fun indexArray(material: Int = 0, block: ShortIndexArrayBuilder.() -> Unit) {
+                indexArrays.add(ShortIndexArrayBuilder(material).apply(block).build())
             }
 
             override fun build(): Mesh {

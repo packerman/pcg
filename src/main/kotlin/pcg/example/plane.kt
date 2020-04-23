@@ -67,6 +67,11 @@ fun plane(
     m: Int = 1, n: Int = 1,
     texture: Boolean = true
 ): Geometry {
+    require(axis1.lengthSquared() > 0f)
+    require(axis2.lengthSquared() > 0f)
+    require(m >= 1)
+    require(n >= 1)
+
     val plane = Plane(origin, axis1, axis2, m, n)
     return oneMeshGeometry {
         vertexArray3f(attribute = Position) {
@@ -84,6 +89,20 @@ fun plane(
             plane.provideIndices(this)
         }
     }
+}
+
+fun horizontalPlane(
+    width: Float, length: Float,
+    m: Int = 1, n: Int = 1,
+    texture: Boolean = true
+): Geometry {
+    require(width > 0f)
+    require(length > 0f)
+
+    return plane(
+        Vector3f(0f, 0f, 0f), Vector3f(width, 0f, 0f), Vector3f(0f, 0f, -length),
+        m, n, texture
+    )
 }
 
 fun main() {

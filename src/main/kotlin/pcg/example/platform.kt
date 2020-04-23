@@ -12,21 +12,22 @@ import pcg.scene.scene
 import pcg.util.Point3f
 
 fun main() {
-    val levelHeight = 6f
-    val planeWidth = 100f
-    val planeLength = 100f
-    val stairsLength = 6f
-    val stairsWidth = 6f
+    val levelHeight = 8f
+    val planeWidth = 200f
+    val planeLength = 200f
+    val stairsLength = 16f
+    val stairsWidth = 8f
     val thickness = 1f
-    val floorWidth = 30f
-    val floorLength = 30f
+    val floorWidth = 50f
+    val floorLength = 50f
     val windowMargin = 2f
     val uLength = stairsWidth / floorWidth
     val vLength = (stairsLength + windowMargin) / floorLength
     val uMin = 0.2f
     val vMin = 0.5f
-    val barrierWidth = stairsWidth + 2f
+    val barrierWidth = stairsWidth + 4f
     val barrierLength = 0.25f
+    val boxSize = 6f
     val vMargin = windowMargin / floorLength
     val floorMaterial = Material(name = "floor", diffuse = Color(128, 128, 0))
     val stairsMaterial = Material(name = "stairs", diffuse = Color(189, 183, 107))
@@ -34,25 +35,10 @@ fun main() {
         Material(name = "ground", twoSided = true, diffuseTexture = Texture("/textures/playground/grass.png"))
     val columnMaterial = Material(name = "column", diffuse = Color(85, 107, 47))
     val boxMaterial = Material(name = "box", diffuseTexture = Texture("/textures/playground/crate.png"))
-    val myStairs = stairs2(levelHeight, stairsLength, stairsWidth, thickness, 6)
-    val ground = plane(
-        Point3f(0f, 0f, 0f),
-        Vector3f(planeWidth, 0f, 0f),
-        Vector3f(0f, 0f, -planeLength),
-        m = 25, n = 25
-    )
-    val myBox = box(
-        Point3f(0f, 0f, 0f),
-        Vector3f(3f, 0f, 0f),
-        Vector3f(0f, 3f, 0f),
-        Vector3f(0f, 0f, -3f)
-    )
-    val floor = box(
-        Point3f(0f, 0f, 0f),
-        Vector3f(floorWidth, 0f, 0f),
-        Vector3f(0f, thickness, 0f),
-        Vector3f(0f, 0f, -floorLength)
-    )
+    val myStairs = stairs2(levelHeight, stairsLength, stairsWidth, thickness, 8)
+    val ground = horizontalPlane(planeWidth, planeLength, m = 25, n = 25)
+    val myBox = box(boxSize, boxSize, boxSize)
+    val floor = box(floorWidth, thickness, floorLength)
     val floor2 = boxWithWindow(
         Point3f(0f, 0f, 0f),
         Vector3f(floorWidth, 0f, 0f),
@@ -62,17 +48,11 @@ fun main() {
         vMin, vMin + vLength
     )
     val column = box(
-        Point3f(0f, 0f, 0f),
-        Vector3f(thickness, 0f, 0f),
-        Vector3f(0f, levelHeight, 0f),
-        Vector3f(0f, 0f, -thickness)
+        thickness,
+        levelHeight,
+        thickness
     )
-    val barrier = box(
-        Point3f(0f, 0f, 0f),
-        Vector3f(barrierWidth, 0f, 0f),
-        Vector3f(0f, 3f, 0f),
-        Vector3f(0f, 0f, -barrierLength)
-    )
+    val barrier = box(barrierWidth, 4f, barrierLength)
 
     fun placeColumns(builder: NodeBuilder) = with(builder) {
         node(column) {
@@ -161,11 +141,10 @@ fun main() {
                             material(stairsMaterial)
                         }
                     }
-
                 }
             }
         }
     }
 
-    writeToFile("TestPlatform.gltf", s.compile(CompileOptions(interleaved = true)))
+    writeToFile("TestPlatform2.gltf", s.compile(CompileOptions(interleaved = true)))
 }

@@ -68,6 +68,13 @@ fun box(
     m: Int = 1, n: Int = 1, p: Int = 1,
     texture: Boolean = true
 ): Geometry {
+    require(a.lengthSquared() > 0f)
+    require(b.lengthSquared() > 0f)
+    require(c.lengthSquared() > 0f)
+    require(m >= 1)
+    require(m >= 1)
+    require(p >= 1)
+
     val box = Box(o, a, b, c, m, n, p, texture = texture)
 
     return oneMeshGeometry {
@@ -84,6 +91,23 @@ fun box(
             box.provideIndices(this)
         }
     }
+}
+
+fun box(
+    width: Float, height: Float, length: Float,
+    m: Int = 1, n: Int = 1, p: Int = 1,
+    texture: Boolean = true
+): Geometry {
+    require(width > 0f)
+    require(height > 0f)
+    require(length > 0f)
+    return box(
+        Point3f(0f, 0f, 0f),
+        Vector3f(width, 0f, 0f),
+        Vector3f(0f, height, 0f),
+        Vector3f(0f, 0f, -length),
+        m, n, p, texture
+    )
 }
 
 fun boxWithWindow(
